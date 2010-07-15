@@ -587,13 +587,64 @@ class MultilingualModelQuerySet(QuerySet):
         return self._field_name_cache
 
     def values(self, *fields):
-        for field in fields:
-            if field not in self._get_all_field_names():
-                raise NotImplementedError("Multilingual fields cannot be queried using queryset.values(...)")
-        return super(MultilingualModelQuerySet, self).values(*fields)
+        """
+        Resolves field names like 'field_en', 'field_cs'. For name 'field' takes
+        default language.
+        """
+        if hasattr(self.model._meta, 'translation_model'):
+            extra_select = {}
+            trans_opts = self.model._meta.translation_model._meta
+            trans_table_name = trans_opts.db_table
+            qn2 = self.get_compiler(DEFAULT_DB_ALIAS).connection.ops.quote_name
+
+            for field_name in fields:
+                field_and_lang = trans_opts.translated_fields.get(field_name)
+                if field_and_lang:
+                    field, language_code = field_and_lang
+                    if language_code is None:
+                        language_code = getattr(self, '_default_language', get_default_language())
+                    table_alias = get_translation_table_alias(trans_table_name,
+                        language_code)
+                    extra_select[field_name] = qn2(table_alias) + '.' + qn2(field.attname)
+            
+            # this maps columns to required field_names
+            result = self.extra(select = extra_select)
+            # and it returns MultilingualModelQuerySet instance, so we have to super it
+            return super(MultilingualModelQuerySet, result).values(*fields)
+        else:
+            return super(MultilingualModelQuerySet, self).values(*fields) 
 
     def values_list(self, *fields, **kwargs):
-        for field in fields:
-            if field not in self._get_all_field_names():
-                raise NotImplementedError("Multilingual fields cannot be queried using queryset.values(...)")
-        return super(MultilingualModelQuerySet, self).values(*fields, **kwargs)
+        """
+        Resolves field names like 'field_en', 'field_cs'. For name 'field' takes
+        default language.
+        """
+        if hasattr(self.model._meta, 'translation_model'):
+            extra_select = {}
+            trans_opts = self.model._meta.translation_model._meta
+            trans_table_name = trans_opts.db_table
+            qn2 = self.get_compiler(DEFAULT_DB_ALIAS).connection.ops.quote_name
+
+            for field_name in fields:
+                field_and_lang = trans_opts.translated_fields.get(field_name)
+                if field_and_lang:
+                    field, language_code = field_and_lang
+                    if language_code is None:
+                        language_code = getattr(self, '_default_language', get_default_language())
+                    table_alias = get_translation_table_alias(trans_table_name,
+                        language_code)
+                    extra_select[field_name] = qn2(table_alias) + '.' + qn2(field.attname)
+            
+            # this maps columns to required field_names
+            result = self.extra(select = extra_select)
+            # and it return MultilingualModelQuerySet instance, so we have to super it
+            return super(MultilingualModelQuerySet, result).values_list(*fields, **kwargs)
+        else:
+            return super(MultilingualModelQuerySet, self).values_list(*fields, **kwargs)
+
+    def get_compiler(self, using=None, connection=None):
+        if using is None and connection is None:
+            raise ValueError("Need either using or connection")
+        if using:
+            connection = connections[using]
+        return MultilingualSQLCompiler(self, connection, using)
