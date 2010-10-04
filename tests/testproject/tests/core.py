@@ -60,3 +60,28 @@ class CoreTestCase(TestCase):
         activate('en')
         self.assertEqual(mfp.title_current, None)
         self.assertEqual(mfp.title_current_any, mfp.title_ja)
+
+    def test_09_values(self):
+        titles = [{'title': 'MLFP-Title1-en'}, {'title': None}]
+        titles_en = [{'title_en': 'MLFP-Title1-en'}, {'title_en': None}]
+        full = [
+            {'id': 1, 'title': 'MLFP-Title1-en', 'content': 'MLFP-Content1-en'}, 
+            {'id': 2, 'title': None, 'content': None}
+        ]
+        full_en = [
+            {'id': 1, 'title_en': 'MLFP-Title1-en', 'content_en': 'MLFP-Content1-en'}, 
+            {'id': 2, 'title_en': None, 'content_en': None}
+        ]
+        titles_list = ['MLFP-Title1-en', None]
+
+        languages.set_default_language('en')
+        # at first try default language
+        self.assertEqual(list(MultilingualFlatPage.objects.values('title')), titles)
+        self.assertEqual(list(MultilingualFlatPage.objects.values('id', 'title', 'content')), full)
+        self.assertEqual(list(MultilingualFlatPage.objects.values_list('title', flat=True)), titles_list)
+
+        languages.set_default_language('ja')
+        # now select specific language
+        self.assertEqual(list(MultilingualFlatPage.objects.values('title_en')), titles_en)
+        self.assertEqual(list(MultilingualFlatPage.objects.values('id', 'title_en', 'content_en')), full_en)
+        self.assertEqual(list(MultilingualFlatPage.objects.values_list('title_en', flat=True)), titles_list)

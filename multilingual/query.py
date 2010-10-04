@@ -603,10 +603,9 @@ class MultilingualModelQuerySet(QuerySet):
                     field, language_code = field_and_lang
                     if language_code is None:
                         language_code = getattr(self, '_default_language', get_default_language())
-                    table_alias = get_translation_table_alias(trans_table_name,
-                        language_code)
+                    table_alias = get_translation_table_alias(trans_table_name, language_code)
                     extra_select[field_name] = qn2(table_alias) + '.' + qn2(field.attname)
-            
+
             # this maps columns to required field_names
             result = self.extra(select = extra_select)
             # and it returns MultilingualModelQuerySet instance, so we have to super it
@@ -631,10 +630,9 @@ class MultilingualModelQuerySet(QuerySet):
                     field, language_code = field_and_lang
                     if language_code is None:
                         language_code = getattr(self, '_default_language', get_default_language())
-                    table_alias = get_translation_table_alias(trans_table_name,
-                        language_code)
+                    table_alias = get_translation_table_alias(trans_table_name, language_code)
                     extra_select[field_name] = qn2(table_alias) + '.' + qn2(field.attname)
-            
+
             # this maps columns to required field_names
             result = self.extra(select = extra_select)
             # and it return MultilingualModelQuerySet instance, so we have to super it
