@@ -13,7 +13,12 @@ class CoreTestCase(TestCase):
         self.assertEqual(mfp.title_ja, 'MLFP-Title1-ja')
         self.assertEqual(mfp.content_en, 'MLFP-Content1-en')
         self.assertEqual(mfp.content_ja, 'MLFP-Content1-ja')
-        
+        mfp = MultilingualFlatPage.objects.filter(title_en='MLFP-Title1-en')
+        # This does not work yet
+        # SomeRelatedModel.objects.filter(relation__multilingualfield = 'neco v cizim jazyce')
+        # This works
+        # MultilingualModel.objects.filter(somerelatedmodel__field = 'something')
+
     def test_02_gll(self):
         mfp = MultilingualFlatPage.objects.get(url='/test2/')
         GLL.lock('en')
@@ -75,7 +80,6 @@ class CoreTestCase(TestCase):
         titles_list = ['MLFP-Title1-en', None]
 
         languages.set_default_language('en')
-        # at first try default language
         self.assertEqual(list(MultilingualFlatPage.objects.values('title')), titles)
         self.assertEqual(list(MultilingualFlatPage.objects.values('id', 'title', 'content')), full)
         self.assertEqual(list(MultilingualFlatPage.objects.values_list('title', flat=True)), titles_list)
@@ -85,3 +89,7 @@ class CoreTestCase(TestCase):
         self.assertEqual(list(MultilingualFlatPage.objects.values('title_en')), titles_en)
         self.assertEqual(list(MultilingualFlatPage.objects.values('id', 'title_en', 'content_en')), full_en)
         self.assertEqual(list(MultilingualFlatPage.objects.values_list('title_en', flat=True)), titles_list)
+
+    #def test_10_create(self):
+    #    Tests for creation needs to be added
+    #    MultilingualFlatPage.objects.get_or_create(title_en = 'MLFP-Title3-en', defaults={'title_ja': 'MLFP-Title3-ja'})
