@@ -58,34 +58,17 @@ class MultilingualQuery(Query):
         reuse.add(table_alias)
 
         # Important step 1: join translation table under language-specific alias
-        # BUG, TODO: must produce LEFT JOIN instead of INNER JOIN
-        trans_alias = self.join((alias, trans_table_name, opts.pk.column, 'master_id'), always_create=True, reuse=reuse,
-                        exclusions=exclusions)
+        # QUESTION: is LEFT OUTER JOIN always required?
+        # HACK: this is hell of a hack, but it is only way that django enables for extra joins now :-(
+        #       Still hopes, that it will get better someday and there will be correct way how add condition into join
+        right_column = '"master_id" AND \'%s\' = "%s"."language_code"' % (language_code, table_alias)
+        trans_alias = self.join((alias, trans_table_name, opts.pk.column, right_column), always_create=True,
+                        reuse=reuse, exclusions=exclusions, promote=True, nullable=True)
 
         # Important step 2: if required alias has not been defined yet, new alias is created in during join
         # We change the alias to language-specific alias, so we can check whether it is already present
         if trans_alias != table_alias:
             self.change_aliases({trans_alias: table_alias})
-
-            # HACK:? This is kind of hack, but it is necessary to pass language condition (step 3) to top level of WHERE
-            # conditions.
-            start_subtree = False
-            # We have to check if new conditions are added to subtree, if so, we end it now and start new subtree
-            # after we add language condition. This might create quite a mess but now situation where this creates
-            # some weird WHERE have not yet been found.
-            if self.where.subtree_parents:
-                connector = self.where.connector
-                start_subtree = True
-                self.where.end_subtree()
-
-            # Important step 3: If we changed alias (so new join to translation table was added) we must add 
-            # condition for language on that join
-            lang_field = trans_opts.get_field('language_code')
-            self.where.add((Constraint(table_alias, 'language_code', lang_field), 'exact', language_code), AND)
-
-            # If we ended subtree before, we start a new one now
-            if start_subtree:
-                self.where.start_subtree(connector)
 
         # This works, not sure why, but it works :-)
         #return field, target, opts, join_list, last, extra_filter
