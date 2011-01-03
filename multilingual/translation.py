@@ -1,15 +1,15 @@
 """
 Support for models' internal Translation class.
 """
+from new import instancemethod
 
-##TODO: this is messy and needs to be cleaned up
-
-from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models import signals
 from django.db.models.base import ModelBase
 from django.utils.translation import get_language
-from multilingual.languages import *
+
+from multilingual.languages import get_language_code_list, get_language_choices, get_default_language, \
+    get_translated_field_alias, get_fallbacks, FALLBACK_FIELD_SUFFIX
 from multilingual.exceptions import TranslationDoesNotExist
 from multilingual.fields import TranslationForeignKey
 from multilingual import manager
@@ -17,7 +17,7 @@ from multilingual.utils import GLL
 # To Be Depricated
 #from multilingual.utils import install_multilingual_modeladmin_new
 
-from new import instancemethod
+
 
 def translation_save_translated_fields(instance, **kwargs):
     """
@@ -25,17 +25,22 @@ def translation_save_translated_fields(instance, **kwargs):
     """
     if not hasattr(instance, '_translation_cache'):
         return
-    for l_id, translation in instance._translation_cache.iteritems():
-        # set the translation ID just in case the translation was
-        # created while instance was not stored in the DB yet
+    for translation in instance._translation_cache.values():
+        # skip missing translations
+        if translation is not None:
+            # set the translation ID just in case the translation was
+            # created while instance was not stored in the DB yet
+    
+            # note: we're using _get_pk_val here even though it is
+            # private, since that's the most reliable way to get the value
+            # on older Django (pk property did not exist yet)
 
-        # note: we're using _get_pk_val here even though it is
-        # private, since that's the most reliable way to get the value
-        # on older Django (pk property did not exist yet)
-        translation.master_id = instance._get_pk_val()
-        translation.save()
+            # TODO: is it still necessary?? There are probably other incompatible changes
+            translation.master_id = instance._get_pk_val()
+            translation.save()
 
-def fill_translation_cache(instance):
+
+def fill_translation_cache(instance, language_code):
     """
     Fill the translation cache using information received in the
     instance objects as extra fields.
@@ -43,41 +48,52 @@ def fill_translation_cache(instance):
     You can not do this in post_init because the extra fields are
     assigned by QuerySet.iterator after model initialization.
     """
+    if not hasattr(instance, '_translation_cache'):
+        instance._translation_cache = {}
 
-    if hasattr(instance, '_translation_cache'):
-        # do not refill the cache
-        return
-    instance._translation_cache = {}
+    if language_code not in get_language_code_list():
+        raise ValueError('Language code must be from language code list.', \
+                         'You might see this error if you are using command.', \
+                         'For further details see comment on l. 116-119.')
 
-    # unsafed instances cannot have translations
+    # unsaved instances cannot have translations
     if not instance.pk:
         return
 
-    for language_code in get_language_code_list():
-        # see if translation for language_code was in the query
-        field_alias = get_translated_field_alias('code', language_code)
-        if getattr(instance, field_alias, None) is not None:
-            field_names = [f.attname for f in instance._meta.translation_model._meta.fields]
+    # skip if we already has translation, or we know there is not one
+    if instance._translation_cache.has_key(language_code):
+        return
 
-            # if so, create a translation object and put it in the cache
-            field_data = {}
-            for fname in field_names:
-                field_data[fname] = getattr(instance,
-                                            get_translated_field_alias(fname, language_code))
+    c_trans_model = instance._meta.translation_model
 
-            translation = instance._meta.translation_model(**field_data)
-            instance._translation_cache[language_code] = translation
+    # see if translation was in the query
+    # WARNING! This must fail if we do not have all fields in query
+    translation_data = {}
+    for field_name in [f.attname for f in c_trans_model._meta.fields]:
+        # We know values of language_code and master_id, so we does not expect them to be in query
+        if field_name in ('language_code', 'master_id'):
+            continue
 
-    # In some situations an (existing in the DB) object is loaded
-    # without using the normal QuerySet.  In such case fallback to
-    # loading the translations using a separate query.
+        try:
+            translation_data[field_name] = getattr(instance, get_translated_field_alias(field_name, language_code))
+        except AttributeError:
+            # if any field is missing we can not store data in translation cache
+            # and we need to use direct query
+            translation_data = None
+            break
 
-    # Unfortunately, this is indistinguishable from the situation when
-    # an object does not have any translations.  Oh well, we'll have
-    # to live with this for the time being.
-    if len(instance._translation_cache.keys()) == 0:
-        for translation in instance.translations.all():
-            instance._translation_cache[translation.language_code] = translation
+    if translation_data is not None:
+        translation = c_trans_model(language_code=language_code, master=instance, **translation_data)
+        instance._translation_cache[language_code] = translation
+    else:
+        # If we do not have translation (e.g. was not part of query)
+        # we will try direct query to load it
+        try:
+            instance._translation_cache[language_code] = instance.translations.get(language_code=language_code)
+        except c_trans_model.DoesNotExist:
+            # translation does not exist, we store None to avoid repetitive calls of this code
+            instance._translation_cache[language_code] = None
+
 
 class TranslatedFieldProxy(property):
     """
@@ -90,7 +106,7 @@ class TranslatedFieldProxy(property):
         self.admin_order_field = alias
         self._language_code = language_code
         self.fallback = fallback
-        
+
     @property
     def language_code(self):
         """
@@ -99,6 +115,15 @@ class TranslatedFieldProxy(property):
         """
         if self._language_code:
             return self._language_code
+
+        # This call is quite problematic when you are using commands, because django by default activates 'en-us' 
+        # even though it is not in your settings.LANGUAGES. In which case ValueError at line 56 is raised.
+        # For further details see Ticket #13859 http://code.djangoproject.com/ticket/13859
+        # Language 'en-us' is set in django/core/management/base.py:202-209 in BaseCommand.execute()
+
+        # I am not sure how to handle this problem it would be much better if it was fixed in django.
+
+        # I might check if language is 'en-us' and in case it is not in LANGUAGES return default language instead.
         return get_language()
 
     def __get__(self, obj, objtype=None):
@@ -139,8 +164,7 @@ def setter_generator(field_name):
     set_translation_field.short_description = "set " + field_name
     return set_translation_field
 
-def get_translation(cls, language_code, create_if_necessary=False,
-                    fallback=False, field=None):
+def get_translation(cls, language_code, create_if_necessary=False, fallback=False, field=None):
     """
     Get a translation instance for the given `language_id_or_code`.
 
@@ -152,44 +176,54 @@ def get_translation(cls, language_code, create_if_necessary=False,
     3. if all of the above fails to find a translation, raise the
     TranslationDoesNotExist exception
     """
-    # fill the cache if necessary
-    cls.fill_translation_cache()
-
     if language_code is None:
-        language_code = getattr(cls, '_default_language', None)
-    if language_code is None:
-        language_code = get_default_language()
+        language_code = getattr(cls, '_default_language', get_default_language())
 
     force = False
     if GLL.is_active:
         language_code = GLL.language_code
         force = True
 
-    if language_code in cls._translation_cache:
-        transobj = cls._translation_cache.get(language_code, None)
+    # fill the cache if necessary
+    cls.fill_translation_cache(language_code)
+
+    translation = cls._translation_cache.get(language_code)
+    if translation is not None:
+         # setter is called
         if field is None:
-            return transobj    
-        value = getattr(transobj, field)
+            return translation
+
+        # getter is called
+        value = getattr(translation, field)
         if value or force or (not fallback):
             return value
 
+    # from here translation does not exist
+
     if create_if_necessary:
-        new_translation = cls._meta.translation_model(master=cls,
-                                                      language_code=language_code)
+        new_translation = cls._meta.translation_model(master=cls, language_code=language_code)
         cls._translation_cache[language_code] = new_translation
         return new_translation
-    # only fall backif we're not in 'force' mode (GLL)
+
+    # fall back only, if we're not in 'force' mode (GLL)
     elif (not force) and fallback:
         for fb_lang_code in get_fallbacks(language_code):
-            transobj = cls._translation_cache.get(fb_lang_code, None)
-            if transobj:
+            # fill cache with fallback translations if necessary
+            cls.fill_translation_cache(fb_lang_code)
+
+            translation = cls._translation_cache.get(fb_lang_code, None)
+            if translation is not None:
+                # setter is called
                 if field is None:
-                    return transobj
-                else:
-                    value = getattr(transobj, field)
-                    if value:
-                        return value
+                    return translation
+
+                # getter is called
+                value = getattr(translation, field)
+                if value:
+                    return value
+
     raise TranslationDoesNotExist(language_code)
+
 
 class TranslationModel(object):
     """
@@ -321,11 +355,11 @@ class TranslationModel(object):
         trans_attrs['language_code'] = models.CharField(max_length=15, blank=True,
                                                         choices=get_language_choices(),
                                                         db_index=True)
-        
+
         related_name = getattr(meta, 'related_name', 'translations')
         if hasattr(meta, 'related_name'):
             delattr(meta, 'related_name')
-        
+
         edit_inline = True
 
         trans_attrs['master'] = TranslationForeignKey(main_cls, blank=False, null=False,
@@ -358,8 +392,8 @@ class TranslationModel(object):
         # Note: don't fill the translation cache in post_init, as all
         # the extra values selected by QAddTranslationData will be
         # assigned AFTER init()
-#        signals.post_init.connect(fill_translation_cache,
-#                sender=main_cls)
+        # signals.post_init.connect(fill_translation_cache,
+        #     sender=main_cls)
 
     finish_multilingual_class = classmethod(finish_multilingual_class)
 # The following will be deprecated:

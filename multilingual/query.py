@@ -1,19 +1,14 @@
 """
-Django-multilingual: a QuerySet subclass for models with translatable
-fields.
-
-This file contains the implementation for QSRF Django.
+Django-multilingual: a QuerySet subclass for models with translatable fields.
 """
 from copy import deepcopy
 
 from django.db.models.query import QuerySet
 from django.db.models.sql.query import Query
-from django.db.models.sql.where import AND, Constraint
+from django.db.models.sql.where import AND
 
-from multilingual.languages import (
-    get_translation_table_alias,
-    get_default_language,
-    get_translated_field_alias)
+from multilingual.languages import get_translation_table_alias, get_translated_field_alias, get_default_language, \
+    get_language_code_list
 
 
 __ALL__ = ['MultilingualModelQuerySet']
@@ -75,12 +70,68 @@ class MultilingualQuery(Query):
         return field, field, opts, [table_alias], [0, 1], []
 
 
+    def add_select_related(self, fields):
+        """
+        If in fields is related_field for translations, will be replaced by fields in proper languages.
+        """
+        new_fields = []
+        extra_select = {}
+        opts = self.model._meta
+        trans_opts = opts.translation_model._meta
+        related_name = trans_opts.related_name
+
+        translation_fields = [f.name for f in trans_opts.fields if f.name not in ('master', 'language_code')]
+
+        for field in fields:
+            # usual select_related
+            if not field.startswith(related_name):
+                new_fields.append(field)
+                continue
+
+            # get language
+            if field == related_name:
+                language_code = get_default_language()
+            else:
+                field_and_lang = field.rsplit('_', 1)
+                # Coincidental field name might occur if language_code is not correct, do not do anything as 
+                # select_related does not raise errors if used with incorrect fields
+                if len(field_and_lang) != 2 or field_and_lang[1] not in get_language_code_list():
+                    new_fields.append(field)
+                    continue
+                field, language_code = field_and_lang
+
+            # This is main code of this method, build extra_select that might be used by fill_translation_cache
+            for trans_field in translation_fields:
+                extra_select[get_translated_field_alias(trans_field, language_code)] = '%s."%s"' % (
+                    get_translation_table_alias(trans_opts.db_table, language_code),
+                    trans_field
+                )
+
+            # XXX: this is not save if translation model has no fields, can it happen??
+
+            # join translatable model (original) table if not joined yet
+            alias = self.get_initial_alias()
+
+            # join translation table if not joined yet
+            translation_fields.remove(trans_opts.pk.name)
+            self.setup_joins(
+                ['%s_%s' % (translation_fields[0], language_code)], # any translated_field
+                opts,
+                alias,
+                True,
+                can_reuse = set([alias])
+            )
+
+        if extra_select:
+            self.add_extra(extra_select, None, None, None, None, None)
+        super(MultilingualQuery, self).add_select_related(new_fields)
+
+
 class MultilingualModelQuerySet(QuerySet):
     """
     A specialized QuerySet that knows how to handle translatable
     fields in ordering and filtering methods.
     """
-
     def __init__(self, model=None, query=None, using=None):
         query = query or MultilingualQuery(model)
         super(MultilingualModelQuerySet, self).__init__(model, query, using)
@@ -100,53 +151,3 @@ class MultilingualModelQuerySet(QuerySet):
         #=======================================================================
         obj.__dict__.update(obj_dict)
         return obj
-
-    def for_language(self, language_code):
-        """
-        Set the default language for all objects returned with this
-        query.
-        """
-        clone = self._clone()
-        clone._default_language = language_code
-        return clone
-
-    def iterator(self):
-        """
-        Add the default language information to all returned objects.
-        """
-        default_language = getattr(self, '_default_language', None)
-        for obj in super(MultilingualModelQuerySet, self).iterator():
-            obj._default_language = default_language
-            yield obj
-
-    def _clone(self, klass=None, **kwargs):
-        """
-        Override _clone to preserve additional information needed by
-        MultilingualModelQuerySet.
-        """
-        clone = super(MultilingualModelQuerySet, self)._clone(klass, **kwargs)
-        clone._default_language = getattr(self, '_default_language', None)
-        return clone
-
-    def order_by(self, *field_names):
-        if hasattr(self.model._meta, 'translation_model'):
-            trans_opts = self.model._meta.translation_model._meta
-            new_field_names = []
-            for field_name in field_names:
-                prefix = ''
-                if field_name[0] == '-':
-                    prefix = '-'
-                    field_name = field_name[1:]
-                field_and_lang = trans_opts.translated_fields.get(field_name)
-                if field_and_lang:
-                    field, language_code = field_and_lang
-                    if language_code is None:
-                        language_code = getattr(self, '_default_language', None)
-                    real_name = get_translated_field_alias(field.attname,
-                                                           language_code)
-                    new_field_names.append(prefix + real_name)
-                else:
-                    new_field_names.append(prefix + field_name)
-            return super(MultilingualModelQuerySet, self).extra(order_by=new_field_names)
-        else:
-            return super(MultilingualModelQuerySet, self).order_by(*field_names)

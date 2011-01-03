@@ -74,9 +74,7 @@ def get_translated_field_alias(field_name, language_code):
     Return an alias for field_name field for a given language_code.
     Used in SQL queries.
     """
-    return ('_trans_'
-            + field_name
-            + '_' + _to_db_identifier(language_code))
+    return '_trans_%s_%s' % (field_name, _to_db_identifier(language_code))
     
 def get_fallbacks(language_code):
     fallbacks = settings.FALLBACK_LANGUAGES.get(language_code, [])
