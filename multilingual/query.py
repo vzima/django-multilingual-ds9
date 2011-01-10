@@ -3,6 +3,7 @@ Django-multilingual: a QuerySet subclass for models with translatable fields.
 """
 from copy import deepcopy
 
+from django.db import connection
 from django.db.models.query import QuerySet
 from django.db.models.sql.query import Query
 from django.db.models.sql.where import AND
@@ -56,7 +57,14 @@ class MultilingualQuery(Query):
         # QUESTION: is LEFT OUTER JOIN always required?
         # HACK: this is hell of a hack, but it is only way that django enables for extra joins now :-(
         #       Still hopes, that it will get better someday and there will be correct way how add condition into join
-        right_column = '"master_id" AND \'%s\' = "%s"."language_code"' % (language_code, table_alias)
+        # XXX: did not work in MySQL, so take quoting from default database until correctly fixed
+        qn = connection.ops.quote_name
+        right_column = '%s AND \'%s\' = %s.%s' % (
+                            qn('master_id'),
+                            language_code,
+                            table_alias, # do not quote, it is alias
+                            qn('language_code')
+                       )
         trans_alias = self.join((alias, trans_table_name, opts.pk.column, right_column), always_create=True,
                         reuse=reuse, exclusions=exclusions, promote=True, nullable=True)
 
