@@ -1,3 +1,4 @@
+#UNCHECKED
 """
 Django-multilingual: language-related settings and functions.
 """

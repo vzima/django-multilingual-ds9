@@ -1,36 +1,42 @@
 """
 Django-multilingual-ng: multilingual model support for Django 1.2.
 
-Note about version numbers:
-    - uneven minor versions are considered unstable releases
-    - even minor versions are considered stable releases
+Multilingual models automatically overrides base class of multilingual models
+
+Multilingual must be installed before any application with multilingual model
+or imported before any multilingual model class is loaded by django.
 """
+# FURTHER CHECK NEEDED
 #VERSION = ('0', '1', '44')
 #__version__ = '.'.join(VERSION)
 
 import warnings
 
+
 class LazyInit(object):
-    VERSION = ('0', '1', '45')
+    VERSION = ('0', '2', '0', 'beta')
     __version__ = '.'.join(VERSION)
     
     __deprecated__ = {
         'models': ('multilingual.models', None),
-        'TranslationDoesNotExist': ('multilingual.exceptions', 'TranslationDoesNotExist'),
-        'LanguageDoesNotExist': ('multilingual.exceptions', 'LanguageDoesNotExist'),
+        # replaced by general DoesNotExist
+        #'TranslationDoesNotExist': ('multilingual.exceptions', 'TranslationDoesNotExist'),
+        # Not used
+        #'LanguageDoesNotExist': ('multilingual.exceptions', 'LanguageDoesNotExist'),
         'set_default_language': ('multilingual.languages', 'set_default_language'),
         'get_default_language': ('multilingual.languages', 'get_default_language'),
         'get_language_code_list': ('multilingual.languages', 'get_language_code_list'),
         'FALLBACK_LANGUAGES': ('multilingual.settings', 'FALLBACK_LANGUAGES'),
-        'Translation': ('multilingual.translation', 'TranslationModel'),
+        # Not used, this is not entirely correct but it works
+        'Translation': ('multilingual.db.models.translation', 'BaseTranslationMeta'),
         'MultilingualModelAdmin': ('multilingual.admin', 'MultilingualModelAdmin'),
         'MultilingualInlineAdmin': ('multilingual.admin', 'MultilingualInlineAdmin'),
         'ModelAdmin': ('multilingual.admin', 'MultilingualModelAdmin'),
-        'Manager': ('multilingual.manager', 'MultilingualManager'),
+        # Moved
+        'Manager': ('multilingual.db.models.manager', 'MultilingualManager'),
     }
     
     __newnames__ = {
-        'Translation': 'TranslationModel',
         'ModelAdmin': 'MultilingualModelAdmin',
         'Manager': 'MultilingualManager',
     }
@@ -80,19 +86,35 @@ class LazyInit(object):
 
 import sys
 sys.modules[__name__] = LazyInit(sys.modules[__name__])
-#
-#try:
-#    """
-#    WARNING: All these names imported here WILL BE DEPRECATED!
-#    """
-#    from multilingual import models
-#    from multilingual.exceptions import TranslationDoesNotExist, LanguageDoesNotExist
-#    from multilingual.languages import (set_default_language, get_default_language,
-#                                        get_language_code_list)
-#    from multilingual.settings import FALLBACK_LANGUAGES
-#    from multilingual.translation import Translation
-#    from multilingual.admin import MultilingualModelAdmin, MultilingualInlineAdmin
-#    from multilingual.manager import Manager
-#    ModelAdmin = MultilingualModelAdmin
-#except ImportError:
-#    pass
+
+
+from django.db.models.base import Model, ModelBase
+from multilingual.db.models.base import MultilingualModel, MultilingualModelBase
+
+
+def install_translation_library():
+    # Change parent of model if it has Translation class
+    # thus changing model to multilingual model
+
+    if getattr(ModelBase, '_multilingual_installed', False):
+        # don't install it twice
+        return
+
+    _modelbase_new_original = ModelBase.__new__
+
+    def _modelbase_new_override(cls, name, bases, attrs):
+        if 'Translation' in attrs:
+            if not issubclass(cls, MultilingualModelBase):
+                if Model in bases:
+                    bases = list(bases)
+                    bases[bases.index(Model)] = MultilingualModel
+                    bases = tuple(bases)
+                return MultilingualModelBase.__new__(MultilingualModelBase, name, bases, attrs)
+
+        return _modelbase_new_original(cls, name, bases, attrs)
+    ModelBase.__new__ = staticmethod(_modelbase_new_override)
+    ModelBase._multilingual_installed = True
+
+# TODO: make this optional
+# install the library
+install_translation_library()

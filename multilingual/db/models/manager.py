@@ -1,10 +1,9 @@
-from django.db import models
+from django.db.models import Manager
 
-from multilingual.query import MultilingualModelQuerySet
-from multilingual.languages import *
+from multilingual.db.models.query import MultilingualQuerySet
 
 
-class MultilingualManager(models.Manager):
+class MultilingualManager(Manager):
     """
     A manager for multilingual models.
 
@@ -12,7 +11,5 @@ class MultilingualManager(models.Manager):
     to use any manager they need.  It should be sufficient to extend
     and additionaly filter or order querysets returned by that manager.
     """
-
     def get_query_set(self):
-        return MultilingualModelQuerySet(self.model)
-Manager = MultilingualManager # backwards compat, will be depricated
+        return MultilingualQuerySet(self.model)

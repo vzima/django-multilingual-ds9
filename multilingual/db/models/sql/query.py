@@ -1,18 +1,13 @@
-"""
-Django-multilingual: a QuerySet subclass for models with translatable fields.
-"""
-from copy import deepcopy
-
 from django.db import connection
-from django.db.models.query import QuerySet
 from django.db.models.sql.query import Query
 from django.db.models.sql.where import AND
 
+from multilingual.db.models.fields import TranslationProxyField
 from multilingual.languages import get_translation_table_alias, get_translated_field_alias, get_default_language, \
     get_language_code_list
 
 
-__ALL__ = ['MultilingualModelQuerySet']
+__ALL__ = ['MultilingualQuery']
 
 
 class MultilingualQuery(Query):
@@ -23,24 +18,23 @@ class MultilingualQuery(Query):
         This overrides setup_joins method in case we want to join multilingual field.
         This is hell good place to rewrite something because it is called for every time when we care.
         """
-        trans_opts = opts.translation_model._meta
         # So far we only handle fields that are local for TranslationModel (not related)
         # so we can only take care of first of names, see NotImplementedError lower
         field_name = names[0]
-        field_and_lang = trans_opts.translated_fields.get(field_name)
+        field = getattr(self.model, field_name, None)
 
         # Field is not multilingual, proceed as usual
-        if not field_and_lang:
+        if not field or not isinstance(field, TranslationProxyField):
             return super(MultilingualQuery, self).setup_joins(names, opts, alias, dupe_multis, allow_many,
                                                               allow_explicit_fk, can_reuse, negate, process_extras)
 
         if len(names) > 1:
             raise NotImplementedError('MultilingualQuery can not now handle relations through multilingual fields')
 
-        field, language_code = field_and_lang
-        if language_code is None:
-            language_code = get_default_language()
-        trans_table_name = trans_opts.db_table
+        # This resolves defaults as well
+        language_code = field.language_code
+
+        trans_table_name = opts.translation_model._meta.db_table
         table_alias = get_translation_table_alias(trans_table_name, language_code)
 
         # Exclude table aliases for other languages to prevent language mismatch
@@ -76,7 +70,6 @@ class MultilingualQuery(Query):
         # This works, not sure why, but it works :-)
         #return field, target, opts, join_list, last, extra_filter
         return field, field, opts, [table_alias], [0, 1], []
-
 
     def add_select_related(self, fields):
         """
@@ -133,29 +126,3 @@ class MultilingualQuery(Query):
         if extra_select:
             self.add_extra(extra_select, None, None, None, None, None)
         super(MultilingualQuery, self).add_select_related(new_fields)
-
-
-class MultilingualModelQuerySet(QuerySet):
-    """
-    A specialized QuerySet that knows how to handle translatable
-    fields in ordering and filtering methods.
-    """
-    def __init__(self, model=None, query=None, using=None):
-        query = query or MultilingualQuery(model)
-        super(MultilingualModelQuerySet, self).__init__(model, query, using)
-
-    def __deepcopy__(self, memo):
-        """
-        Deep copy of a QuerySet doesn't populate the cache
-        """
-        obj_dict = deepcopy(self.__dict__, memo)
-        obj_dict['_iter'] = None
-        #=======================================================================
-        # Django Multilingual NG Specific Code START
-        #=======================================================================
-        obj = self.__class__(self.model) # add self.model as first argument
-        #=======================================================================
-        # Django Multilingual NG Specific Code END
-        #=======================================================================
-        obj.__dict__.update(obj_dict)
-        return obj

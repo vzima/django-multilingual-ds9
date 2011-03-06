@@ -1,9 +1,4 @@
-class TranslationDoesNotExist(Exception):
-    """
-    The requested translation does not exist
-    """
-    pass
-
+# TODO: is this exception useful or should I delete it
 class LanguageDoesNotExist(Exception):
     """
     The requested language does not exist

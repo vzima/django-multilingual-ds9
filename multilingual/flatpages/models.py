@@ -1,9 +1,7 @@
 from django.db import models
 from django.contrib.sites.models import Site
 from django.utils.translation import ugettext_lazy as _
-from multilingual.translation import Translation as TranslationBase
-from multilingual.exceptions import TranslationDoesNotExist
-from multilingual.manager import MultilingualManager
+from multilingual.db.models.manager import MultilingualManager
 
 
 class MultilingualFlatPage(models.Model):
@@ -14,11 +12,11 @@ class MultilingualFlatPage(models.Model):
         help_text=_("Example: 'flatpages/contact_page.html'. If this isn't provided, the system will use 'flatpages/default.html'."))
     registration_required = models.BooleanField(_('registration required'), help_text=_("If this is checked, only logged-in users will be able to view the page."))
     sites = models.ManyToManyField(Site)
-    
+
     objects = MultilingualManager()
 
     # And now the translatable fields
-    class Translation(TranslationBase):
+    class Translation:
         """
         The definition of translation model.
 
@@ -42,10 +40,7 @@ class MultilingualFlatPage(models.Model):
 
     def __unicode__(self):
         # note that you can use name and description fields as usual
-        try:
-            return u"%s -- %s" % (self.url, self.title)
-        except TranslationDoesNotExist:
-            return u"-not-available-"
+        return u"%s -- %s" % (self.url, self.title)
 
     def get_absolute_url(self):
         return self.url

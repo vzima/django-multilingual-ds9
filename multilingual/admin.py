@@ -1,3 +1,4 @@
+#UNCHECKED
 """Admin suppor for inlines
 
 Peter Cicman, Divio GmbH, 2008
