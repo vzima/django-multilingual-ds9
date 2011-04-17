@@ -1,21 +1,18 @@
 ======================
-Django Multilingual-NG
+Django Multilingual Deep Space 9
 ======================
 
-Django-multilingual-ng is a branch of django-multilingual, compatible with 
-Django 1.2 (Beta 1) as well as providing admin UI improvements.
+Django-multilingual-DS9 is a branch of django-multilingual,
+forked from django-multilingual-ng compatible with
+Django 1.2 and 1.3 with restructured core.
 
-multilingual-ng tries to be compatible with django-multilingual whenever
+Django-multilingual-ds9 tries to be compatible with django-multilingual-ng whenever
 possible. In the best case you can just replace django-multilingual-ng with
 django-multilingual without having to change any code in your apps.
 
-Note that since multilingual-ng does not use language_id's anymore, you'll have
-to use the mlng_convert command to migrate your old apps to ng. For this you
-need south installed.
-
-DJANGO-MULTILINGUAL-NG DOES NOT WORK WITH DJANGO TRUNK AS OF DJANGO r12502!
-This issue will be resolved as soon as a new official Django package is
-released.
+Only requirement for update from django-multilingual-ng is to either rename tables in
+your database to remove underscore '_' before 'translation' suffix of update your models
+Translation.Meta class to set db_table appropriately.
 
 === Tests ===
 To run tests for multilingual you must set
