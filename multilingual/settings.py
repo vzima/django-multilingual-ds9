@@ -1,4 +1,5 @@
 # UNCHECKED
+#TODO: Check that all settings goes through here
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 

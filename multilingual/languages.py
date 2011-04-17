@@ -1,4 +1,5 @@
 #UNCHECKED
+#TODO: remove DEFAULT_LANGUAGE setting
 """
 Django-multilingual: language-related settings and functions.
 """

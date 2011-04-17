@@ -383,34 +383,47 @@ class MultilingualModelAdmin(admin.ModelAdmin):
                 path += "?%s" % lang
             return HttpResponseRedirect(path)
         return super(MultilingualModelAdmin, self).response_change(request, obj)
-    
+
 
 def get_translated_fields(model, language=None):
     meta = model._meta
-    if not hasattr(meta, 'translated_fields'):
-        if hasattr(meta, 'translation_model'):
-            meta = meta.translation_model._meta
-        else:
-            return
+
     # returns all the translatable fields, except of the default ones
     if not language:
-        for name, (field, non_default) in meta.translated_fields.items():
-            if non_default: 
-                yield name, field
+        for field in meta.virtual_fields:
+            if field._language_code and not field._fallback:
+                yield field.name, field
+        #===============================================================================================================
+        # for name, (field, non_default) in meta.translated_fields.items():
+        #    if non_default:
+        #        yield name, field
+        #===============================================================================================================
+
     else:
-        # if language is defined return fields in the same order, like they are defined in the 
-        # translation class
-        for field in meta.fields:
-            if field.primary_key:
-                continue
-            name = field.name + "_%s" % language
-            field = meta.translated_fields.get(name, None)
-            if field:
-                yield name, field[0]
-        
+        for field in meta.virtual_fields:
+            if field._language_code == language and not field._fallback:
+                yield field.name, field
+        #===============================================================================================================
+        # # if language is defined return fields in the same order, like they are defined in the 
+        # # translation class
+        # for field in meta.fields:
+        #    if field.primary_key:
+        #        continue
+        #    name = field.name + "_%s" % language
+        #    field = meta.translated_fields.get(name, None)
+        #    if field:
+        #        yield name, field[0]
+        #===============================================================================================================
+
 
 def get_default_translated_fields(model):
-    if hasattr(model._meta, 'translation_model'):
-        for name, (field, non_default) in model._meta.translation_model._meta.translated_fields.items():
-            if not non_default:
-                yield name, field
+    for field in model._meta.virtual_fields:
+        if field._language_code is None and not field._fallback:
+            yield field.name, model._meta.translation_model._meta.get_field(field.name)
+
+    #===================================================================================================================
+    # if hasattr(model._meta, 'translation_model'):
+    #    for name, (field, non_default) in model._meta.translation_model._meta.translated_fields.items():
+    #        if not non_default:
+    #            yield name, field
+    #===================================================================================================================

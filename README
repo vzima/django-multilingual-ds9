@@ -16,3 +16,8 @@ need south installed.
 DJANGO-MULTILINGUAL-NG DOES NOT WORK WITH DJANGO TRUNK AS OF DJANGO r12502!
 This issue will be resolved as soon as a new official Django package is
 released.
+
+=== Tests ===
+To run tests for multilingual you must set
+ TEST_RUNNER = 'multilingual.tests.MultilingualTestSuiteRunner'
+in your settings.

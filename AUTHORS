@@ -1,13 +1,21 @@
+django-multilingual-ng was restructured from django-multilingual-ng in 2011 by Vlastimil Zíma.
+
+Current or former committers of restuctured django-multilingual-ng:
+
+    Vlastimil Zíma
+
+
 django-multilingual-ng was branched from django-multilingual in 2010 by Jonas Obrist.
 
 Current or former committers of django-multilingual-ng:
 
-	Jonas Obrist
-	
+    Jonas Obrist
+
 Contributors o django-multilingual-ng
 
-	Stefan Foulis
-	Remy Hubscher
+    Stefan Foulis
+    Remy Hubscher
+
 
 django-multilingual was originally created in 2007 by Marcin Kaszynski.
 
@@ -34,4 +42,3 @@ Contributors of django-multilingual:
     JustinLilly
     Jannis Leidel
     panos.laganakos
-

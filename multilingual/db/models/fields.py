@@ -92,7 +92,7 @@ class TranslationProxyField(object):
                 self._field_name
             )
         except instance._meta.translation_model.DoesNotExist:
-            print "TRANSLATION DOES NOT EXIST", repr(instance), self.name
+            print "TRANSLATION DOES NOT EXIST", type(instance), instance.pk, self.name
             return None
 
     def __set__(self, instance, value):

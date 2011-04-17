@@ -34,7 +34,11 @@ class MultilingualQuery(Query):
         # This resolves defaults as well
         language_code = field.language_code
 
-        trans_table_name = opts.translation_model._meta.db_table
+        translation_cls = opts.translation_model
+        translation_opts = translation_cls._meta
+        target_field = translation_opts.get_field(field._field_name)
+
+        trans_table_name = translation_opts.db_table
         table_alias = get_translation_table_alias(trans_table_name, language_code)
 
         # Exclude table aliases for other languages to prevent language mismatch
@@ -67,9 +71,9 @@ class MultilingualQuery(Query):
         if trans_alias != table_alias:
             self.change_aliases({trans_alias: table_alias})
 
-        # This works, not sure why, but it works :-)
-        #return field, target, opts, join_list, last, extra_filter
-        return field, field, opts, [table_alias], [0, 1], []
+        # Return target field on target model, target field in database, target model options
+        # and some other fields I do not know what they are for :-)
+        return target_field, target_field, translation_opts, [table_alias], [0, 1], []
 
     def add_select_related(self, fields):
         """
@@ -79,7 +83,9 @@ class MultilingualQuery(Query):
         extra_select = {}
         opts = self.model._meta
         trans_opts = opts.translation_model._meta
-        related_name = trans_opts.related_name
+        # TODO: fix this
+        #related_name = trans_opts.related_name
+        related_name = 'translations'
 
         translation_fields = [f.name for f in trans_opts.fields if f.name not in ('master', 'language_code')]
 

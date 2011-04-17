@@ -206,7 +206,7 @@ class MultilingualModel(models.Model):
 
         elif fallback:
             for language_code in get_fallbacks(language_code):
-                self.fill_translation_cache(language_code)
+                self._fill_translation_cache(language_code)
                 translation = self._translation_cache.get(language_code)
                 if translation is not None:
                     return translation
