@@ -113,7 +113,7 @@ class MultilingualQuery(Query):
                     trans_field
                 )
 
-            # XXX: this is not save if translation model has no fields, can it happen??
+            # XXX: this is not safe if translation model has no fields, can it happen??
 
             # join translatable model (original) table if not joined yet
             alias = self.get_initial_alias()

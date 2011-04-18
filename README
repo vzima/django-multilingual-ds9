@@ -6,6 +6,8 @@ Django-multilingual-DS9 is a branch of django-multilingual,
 forked from django-multilingual-ng compatible with
 Django 1.2 and 1.3 with restructured core.
 
+Parts marked as deprecated in django-multilingual-ng will not be checked for compatibility.
+
 Django-multilingual-ds9 tries to be compatible with django-multilingual-ng whenever
 possible. In the best case you can just replace django-multilingual-ng with
 django-multilingual without having to change any code in your apps.

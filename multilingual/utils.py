@@ -1,16 +1,13 @@
-# UNCHECKED
-# Rewrite to gll module
+import warnings
+warnings.warn('Utils module deprecated.')
+
+from multilingual.languages import lock, release, is_locked, get_active
+
 try:
     from django.utils.decorators import auto_adapt_to_methods as method_decorator
 except ImportError:
     from django.utils.decorators import method_decorator
-try:
-    from threading import local
-except ImportError:
-    from django.utils._threading_local import local
 
-_thread_locals = local()
-_thread_locals.gll_language_code = None
 
 def is_multilingual_model(model):
     """
@@ -19,14 +16,9 @@ def is_multilingual_model(model):
     return hasattr(model._meta, 'translation_model')
 
 
-def _get_language_code():
-    return getattr(_thread_locals, 'gll_language_code', None)
-
-def _set_language_code(lang):
-    setattr(_thread_locals, 'gll_language_code', lang)
-
-
-class GLLError(Exception): pass
+## DEPRECATED
+class GLLError(Exception):
+    pass
 
 
 class GlobalLanguageLock(object):
@@ -34,23 +26,17 @@ class GlobalLanguageLock(object):
     The Global Language Lock can be used to force django-multilingual-ng to use
     a specific language and not try to fall back.
     """
-    def lock(self, language_code):
-        _set_language_code(language_code)
-        
-    def release(self):
-        _set_language_code(None)
-        
+    lock = lock
+    release = release
+
     @property
     def language_code(self):
-        lang_code = _get_language_code()
-        if lang_code is not None:
-            return lang_code
-        raise GLLError("The Global Language Lock is not active")
-        
+        return get_active()
+
     @property
     def is_active(self):
-        return _get_language_code() is not None
-        
+        return is_locked()
+
 GLL = GlobalLanguageLock()
 
 

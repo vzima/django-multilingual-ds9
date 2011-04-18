@@ -100,9 +100,7 @@ class ModelTest(unittest.TestCase):
     def test16_manager_select_related(self):
         obj = Managing.objects.select_related('translations').get(pk=1)
         #TODO: we should check instead that translation cache is created without subsequent SQL request
-        #XXX: This is definitely wrong, there are some problems with getting currently active language
-        #self.assertEqual(obj._trans_name_cs, 'a')
-        self.assertEqual(obj._trans_name_en, 'a')
+        self.assertEqual(obj._trans_name_cs, 'a')
 
     def test17_manager_values(self):
         names = [u'e', u'é', u'ě']

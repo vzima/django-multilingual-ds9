@@ -54,8 +54,6 @@ class MultilingualTestSuiteRunner(DjangoTestSuiteRunner):
         self.old_installed = getattr(settings, 'INSTALLED_APPS', None)
         self.old_languages = getattr(settings, 'LANGUAGES')
         self.old_language_code = getattr(settings, 'LANGUAGE_CODE')
-        # TODO: remove this setting entirely
-        self.old_default_language = getattr(settings, 'DEFAULT_LANGUAGE')
 
         # Update settings to what is needed
         settings.INSTALLED_APPS = multilingual_apps()
@@ -64,7 +62,6 @@ class MultilingualTestSuiteRunner(DjangoTestSuiteRunner):
             ('en', gettext('English')),
         )
         settings.LANGUAGE_CODE = 'cs'
-        settings.DEFAULT_LANGUAGE = 'cs'
 
     def run_suite(self, *args, **kwargs):
         old_language_active = get_language()
@@ -78,7 +75,6 @@ class MultilingualTestSuiteRunner(DjangoTestSuiteRunner):
         settings.INSTALLED_APPS = self.old_installed
         settings.LANGUAGES = self.old_languages
         settings.LANGUAGE_CODE = self.old_language_code
-        settings.DEFAULT_LANGUAGE = self.old_default_language
 
         super(MultilingualTestSuiteRunner, self).teardown_test_environment(**kwargs)
 

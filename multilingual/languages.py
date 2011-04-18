@@ -10,6 +10,8 @@ from django.utils.translation import get_language
 
 FALLBACK_FIELD_SUFFIX = '_any'
 
+_locks = {}
+
 
 def get_dict():
     """
@@ -36,15 +38,44 @@ def get_settings_default():
     return settings.LANGUAGE_CODE
 
 
+def lock(language_code):
+    """
+    Locks language and disables fallbacks
+    """
+    if language_code not in get_all():
+        raise ValueError("Invalid language '%s'" % language_code)
+    _locks[currentThread()] = language_code
+
+
+def release():
+    """
+    Releases language lock
+    """
+    _locks.pop(currentThread(), None)
+
+
+def is_locked():
+    """
+    Returns state of lock
+    """
+    return currentThread() in _locks
+
+
 def get_active():
     """
     Differs from django's get_language:
     - always returns one of LANGUAGES in settings
     - is influenced by language locks
     """
-    #TODO: 1. check locked language
+    # 1. check locked language
     # 2. get language from django if one of LANGUAGES
     # 3. get default language from settings
+
+    # This is faster that call is_locked() method
+    language_code = _locks.get(currentThread(), None)
+    if language_code is not None:
+        return language_code
+
     language_code = get_language()
     if language_code not in get_all():
         # Try to use only first component
@@ -60,6 +91,9 @@ def get_fallbacks(language_code):
     """
     Returns enabled fallbacks for language.
     """
+    if is_locked():
+        return ()
+
     all = get_all()
     all.pop(all.index(language_code))
     #TODO: sort to have same language languages first (like 'en' for 'en-us') or use only them
@@ -91,4 +125,3 @@ def get_language_choices():
 
 def get_language_idx(language_code):
     return get_all().index(language_code)
-
