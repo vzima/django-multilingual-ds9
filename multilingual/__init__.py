@@ -22,6 +22,9 @@ class LazyInit(object):
         'MultilingualModelAdmin': ('multilingual.admin', 'MultilingualModelAdmin'),
         'MultilingualInlineAdmin': ('multilingual.admin', 'MultilingualInlineAdmin'),
         'ModelAdmin': ('multilingual.admin', 'MultilingualModelAdmin'),
+        # These were actually used so keep it for a while deprecated
+        'Translation': ('multilingual.db.models.translation', 'BaseTranslationMeta'),
+        'set_default_language': ('django.utils.translation', 'activate'),
         # Moved
         'Manager': ('multilingual.db.models.manager', 'MultilingualManager'),
     }

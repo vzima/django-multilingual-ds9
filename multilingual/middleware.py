@@ -2,7 +2,7 @@
 from django.utils.translation import get_language
 
 from multilingual.exceptions import LanguageDoesNotExist
-from multilingual.languages import set_default_language
+from multilingual import set_default_language
 
 
 class DefaultLanguageMiddleware(object):
