@@ -7,11 +7,10 @@ from django import template
 from django import forms
 from django.template import Node, NodeList, Template, Context, resolve_variable
 from django.template.loader import get_template, render_to_string
-from django.conf import settings
 from django.utils.html import escape
 from multilingual.languages import (
-    get_default_language,
-    get_language_code_list,
+    get_language,
+    get_all,
     get_language_name,
     get_language_bidi,
     get_language_idx
@@ -51,7 +50,7 @@ class EditTranslationNode(template.Node):
         if self.language:
             language_code = self.language.resolve(context)
         else:
-            language_code = get_default_language()
+            language_code = get_language()
         real_name = "%s.%s.%s.%s" % (self.form_name,
                                      trans_model._meta.object_name.lower(),
                                      get_language_idx(language_code),
@@ -79,7 +78,7 @@ def reorder_translation_formset_by_language_code(inline_admin_form):
     lang_to_form = dict([(form.form.initial['language_id'], form)
                          for form in inline_admin_form])
     return [lang_to_form[language_code] for language_code in
-        get_language_code_list()]
+        get_all()]
     
 class GLLNode(template.Node):
     def __init__(self, language_code, nodelist):

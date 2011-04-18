@@ -1,10 +1,9 @@
 from django.db import connection
 from django.db.models.sql.query import Query
-from django.db.models.sql.where import AND
 
 from multilingual.db.models.fields import TranslationProxyField
-from multilingual.languages import get_translation_table_alias, get_translated_field_alias, get_default_language, \
-    get_language_code_list
+from multilingual.languages import get_table_alias, get_field_alias, get_language, \
+    get_all
 
 
 __ALL__ = ['MultilingualQuery']
@@ -39,7 +38,7 @@ class MultilingualQuery(Query):
         target_field = translation_opts.get_field(field._field_name)
 
         trans_table_name = translation_opts.db_table
-        table_alias = get_translation_table_alias(trans_table_name, language_code)
+        table_alias = get_table_alias(trans_table_name, language_code)
 
         # Exclude table aliases for other languages to prevent language mismatch
         # TEST: filter(name_en="some", name_cs="neco")
@@ -97,20 +96,20 @@ class MultilingualQuery(Query):
 
             # get language
             if field == related_name:
-                language_code = get_default_language()
+                language_code = get_language()
             else:
                 field_and_lang = field.rsplit('_', 1)
                 # Coincidental field name might occur if language_code is not correct, do not do anything as 
                 # select_related does not raise errors if used with incorrect fields
-                if len(field_and_lang) != 2 or field_and_lang[1] not in get_language_code_list():
+                if len(field_and_lang) != 2 or field_and_lang[1] not in get_all():
                     new_fields.append(field)
                     continue
                 field, language_code = field_and_lang
 
             # This is main code of this method, build extra_select that might be used by fill_translation_cache
             for trans_field in translation_fields:
-                extra_select[get_translated_field_alias(trans_field, language_code)] = '%s."%s"' % (
-                    get_translation_table_alias(trans_opts.db_table, language_code),
+                extra_select[get_field_alias(trans_field, language_code)] = '%s."%s"' % (
+                    get_table_alias(trans_opts.db_table, language_code),
                     trans_field
                 )
 

@@ -19,7 +19,7 @@ from django.forms.models import BaseInlineFormSet, ModelFormMetaclass
 from django.utils.translation import ugettext as _
 from django.template.loader import find_template
 from django.template import TemplateDoesNotExist
-from multilingual.languages import get_default_language
+from multilingual.languages import get_language
 from multilingual.utils import GLL
 
 MULTILINGUAL_PREFIX = '_ml__trans_'
@@ -27,7 +27,7 @@ MULTILINGUAL_INLINE_PREFIX = '_ml__inline_trans_'
 
 def gll(func):
     def wrapped(cls, request, *args, **kwargs):
-        cls.use_language = request.GET.get('lang', request.GET.get('language', get_default_language()))
+        cls.use_language = request.GET.get('lang', request.GET.get('language', get_language()))
         GLL.lock(cls.use_language)
         resp = func(cls, request, *args, **kwargs)
         GLL.release()
@@ -374,7 +374,7 @@ class MultilingualModelAdmin(admin.ModelAdmin):
             opts = obj._meta
             msg = _('The %(name)s "%(obj)s" was changed successfully.') % {'name': force_unicode(opts.verbose_name), 'obj': force_unicode(obj)}
             self.message_user(request, msg + ' ' + _("You may edit it again below."))
-            lang, path = request.GET.get('language', get_default_language()), request.path
+            lang, path = request.GET.get('language', get_language()), request.path
             if lang:
                 lang = "language=%s" % lang
             if request.REQUEST.has_key('_popup'):

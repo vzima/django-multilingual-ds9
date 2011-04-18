@@ -1,90 +1,94 @@
-#UNCHECKED
-#TODO: remove DEFAULT_LANGUAGE setting
 """
-Django-multilingual: language-related settings and functions.
+Pre-processing of language settings and other language related functions.
 """
+from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
+from django.utils.datastructures import SortedDict
+from django.utils.thread_support import currentThread
+from django.utils.translation import get_language
 
-# Note: this file did become a mess and will have to be refactored
-# after the configuration changes get in place.
 
-#retrieve language settings from settings.py
-from multilingual import settings
+FALLBACK_FIELD_SUFFIX = '_any'
 
-from django.utils.translation import ugettext_lazy as _
-from multilingual.exceptions import LanguageDoesNotExist
 
-try:
-    from threading import local
-except ImportError:
-    from django.utils._threading_local import local
+def get_dict():
+    """
+    So far only wrapper on LANGUAGES setting.
+    """
+    return SortedDict(settings.LANGUAGES)
 
-thread_locals = local()
 
-def get_language_count():
-    return len(settings.LANGUAGES)
+def get_all():
+    """
+    Tuple of defined language codes.
+    """
+    return get_dict().keys()
+
+
+def get_settings_default():
+    #TODO: move it so it is checked only once
+    if settings.LANGUAGE_CODE not in get_all():
+        raise ImproperlyConfigured(
+            "LANGUAGE_CODE '%s' is not one of LANGUAGES." \
+            "Set one of LANGUAGES as LANGUAGE_CODE or add '%s' to LANGUAGES."
+            % (settings.LANGUAGE_CODE, settings.LANGUAGE_CODE)
+        )
+    return settings.LANGUAGE_CODE
+
+
+def get_active():
+    """
+    Differs from django's get_language:
+    - always returns one of LANGUAGES in settings
+    - is influenced by language locks
+    """
+    #TODO: 1. check locked language
+    # 2. get language from django if one of LANGUAGES
+    # 3. get default language from settings
+    language_code = get_language()
+    if language_code not in get_all():
+        # Try to use only first component
+        parts = language_code.split('-', 1)
+        if len(parts) == 2 and parts[0] in get_all():
+            language_code = parts[0]
+        else:
+            language_code = get_settings_default()
+    return language_code
+
+
+def get_fallbacks(language_code):
+    """
+    Returns enabled fallbacks for language.
+    """
+    all = get_all()
+    all.pop(all.index(language_code))
+    #TODO: sort to have same language languages first (like 'en' for 'en-us') or use only them
+    return all
+
+
+def _db_prep_language_code(language_code):
+    return language_code.replace('-', '_')
+
+
+def get_table_alias(table_name, language_code):
+    return '%s_%s' % (table_name, _db_prep_language_code(language_code))
+
+
+def get_field_alias(field_name, language_code):
+    return '_trans_%s_%s' % (field_name, _db_prep_language_code(language_code))
+
+
+### DEPRECATED ###
 
 def get_language_name(language_code):
-    return settings.LANG_DICT[language_code]
+    return dict(settings.LANGUAGES)[language_code]
 
 def get_language_bidi(language_code):
     return language_code in settings.LANGUAGES_BIDI
 
-def get_language_code_list():
-    return settings.LANG_DICT.keys()
-
 def get_language_choices():
     return settings.LANGUAGES
 
-def set_default_language(language_code):
-    """
-    Set the default language for the whole translation mechanism.
-    """
-    thread_locals.DEFAULT_LANGUAGE = language_code
-
-def get_default_language():
-    """
-    Return the language code set by set_default_language.
-    """
-    return getattr(thread_locals, 'DEFAULT_LANGUAGE',
-                   settings.DEFAULT_LANGUAGE)
-get_default_language_code = get_default_language
-
-def _to_db_identifier(name):
-    """
-    Convert name to something that is usable as a field name or table
-    alias in SQL.
-
-    For the time being assume that the only possible problem with name
-    is the presence of dashes.
-    """
-    return name.replace('-', '_')
-
-def get_translation_table_alias(translation_table_name, language_code):
-    """
-    Return an alias for the translation table for a given language_code.
-    Used in SQL queries.
-    """
-    return (translation_table_name
-            + '_'
-            + _to_db_identifier(language_code))
-
 def get_language_idx(language_code):
-    return get_language_code_list().index(language_code)
+    return get_all().index(language_code)
 
-def get_translated_field_alias(field_name, language_code):
-    """
-    Return an alias for field_name field for a given language_code.
-    Used in SQL queries.
-    """
-    return '_trans_%s_%s' % (field_name, _to_db_identifier(language_code))
-    
-def get_fallbacks(language_code):
-    fallbacks = settings.FALLBACK_LANGUAGES.get(language_code, [])
-    if len(language_code) != 2 and settings.IMPLICIT_FALLBACK:
-        if not language_code[:2] in fallbacks:
-            fallbacks.insert(0, language_code[:2])
-    if language_code is not None and language_code not in fallbacks:
-        fallbacks.insert(0, language_code)
-    return fallbacks
-
-FALLBACK_FIELD_SUFFIX = '_any'

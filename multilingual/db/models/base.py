@@ -40,7 +40,7 @@ from multilingual.db.models.fields import TranslationProxyField
 from multilingual.db.models.manager import MultilingualManager
 from multilingual.db.models.options import MultilingualOptions
 from multilingual.db.models.translation import TranslationModelBase, TranslationModel
-from multilingual.languages import get_fallbacks, get_translated_field_alias, get_language_code_list
+from multilingual.languages import get_fallbacks, get_field_alias, get_all
 
 # TODO: inheritance of multilingual models and translation models
 
@@ -72,7 +72,7 @@ class MultilingualModelBase(ModelBase):
         for field in c_trans_model._meta.fields:
             if field.name in ('id', 'language_code', 'master'):
                 continue
-            for language_code in get_language_code_list():
+            for language_code in get_all():
                 proxy = TranslationProxyField(field.name, language_code)
                 attrs[proxy.name] = proxy
                 proxy = TranslationProxyField(field.name, language_code, fallback=True)
@@ -162,7 +162,7 @@ class MultilingualModel(models.Model):
                 continue
 
             try:
-                translation_data[field_name] = getattr(self, get_translated_field_alias(field_name, language_code))
+                translation_data[field_name] = getattr(self, get_field_alias(field_name, language_code))
             except AttributeError:
                 # if any field is missing we can not store data in translation cache
                 # and we need to use direct query

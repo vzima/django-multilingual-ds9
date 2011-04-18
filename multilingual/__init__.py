@@ -16,19 +16,9 @@ import warnings
 class LazyInit(object):
     VERSION = ('0', '2', '0', 'beta')
     __version__ = '.'.join(VERSION)
-    
+
     __deprecated__ = {
         'models': ('multilingual.models', None),
-        # replaced by general DoesNotExist
-        #'TranslationDoesNotExist': ('multilingual.exceptions', 'TranslationDoesNotExist'),
-        # Not used
-        #'LanguageDoesNotExist': ('multilingual.exceptions', 'LanguageDoesNotExist'),
-        'set_default_language': ('multilingual.languages', 'set_default_language'),
-        'get_default_language': ('multilingual.languages', 'get_default_language'),
-        'get_language_code_list': ('multilingual.languages', 'get_language_code_list'),
-        'FALLBACK_LANGUAGES': ('multilingual.settings', 'FALLBACK_LANGUAGES'),
-        # Not used, this is not entirely correct but it works
-        'Translation': ('multilingual.db.models.translation', 'BaseTranslationMeta'),
         'MultilingualModelAdmin': ('multilingual.admin', 'MultilingualModelAdmin'),
         'MultilingualInlineAdmin': ('multilingual.admin', 'MultilingualInlineAdmin'),
         'ModelAdmin': ('multilingual.admin', 'MultilingualModelAdmin'),

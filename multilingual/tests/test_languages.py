@@ -17,8 +17,7 @@ class LanguagesTest(unittest.TestCase):
         pass
 
     def test01_settings(self):
-        #XXX: This is somehow wrong :(
-        self.assertEqual(languages.get_default_language(), 'en')
+        self.assertEqual(languages.get_language(), 'cs')
 
     #TODO: check language re-seting
     #TODO: also do not forget to check good behavior in on of apps

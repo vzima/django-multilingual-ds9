@@ -1,7 +1,13 @@
-from django.utils.translation import get_language
-
-from multilingual.languages import get_default_language, get_language_code_list, FALLBACK_FIELD_SUFFIX
+from multilingual.languages import get_language, FALLBACK_FIELD_SUFFIX
 from multilingual.utils import GLL
+
+
+def log_does_not_exist(parent, translation_name):
+    #print "TRANSLATION DOES NOT EXIST", type(parent), parent.pk, translation_name
+    pass
+    # TODO: use django log if available
+    #from  django.utils.log import debug
+    #debug('some message')
 
 
 class TranslationProxyField(object):
@@ -66,12 +72,7 @@ class TranslationProxyField(object):
         # For further details see Ticket #13859 http://code.djangoproject.com/ticket/13859
         # Language 'en-us' is set in django/core/management/base.py:202-209 in BaseCommand.execute()
 
-        language_code = get_language()
-        # If language is 'en-us' and it is not in LANGUAGES returns default language instead.
-        # I am not sure how to handle this problem it would be much better if it was fixed in django.
-        if language_code not in get_language_code_list():
-            return get_default_language()
-        return language_code
+        return get_language()
 
     @property
     def fallback(self):
@@ -92,7 +93,7 @@ class TranslationProxyField(object):
                 self._field_name
             )
         except instance._meta.translation_model.DoesNotExist:
-            print "TRANSLATION DOES NOT EXIST", type(instance), instance.pk, self.name
+            log_does_not_exist(instance, self.name)
             return None
 
     def __set__(self, instance, value):
