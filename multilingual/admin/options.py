@@ -4,7 +4,7 @@ from django.utils.encoding import force_unicode
 from django.utils.functional import curry
 from django.utils.translation import ugettext as _
 
-from multilingual.forms.models import multilingual_modelform_factory, MultilingualModelForm
+from multilingual.forms.forms import multilingual_modelform_factory, MultilingualModelForm
 from multilingual.languages import get_dict, get_active, lock, release
 
 #TODO: Inline model admins

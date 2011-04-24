@@ -3,7 +3,7 @@ from django.contrib import admin
 from multilingual.flatpages.models import MultilingualFlatPage
 from django.utils.translation import ugettext_lazy as _
 from multilingual.admin import MultilingualModelAdmin
-from multilingual.forms.models import MultilingualModelForm
+from multilingual.forms.forms import MultilingualModelForm
 
 class MultilingualFlatpageForm(MultilingualModelForm):
     url = forms.RegexField(label=_("URL"), max_length=100, regex=r'^[-\w/]+$',

@@ -1,5 +1,5 @@
 """
-Django-multilingual-ng: multilingual model support for Django 1.2.
+Django-multilingual-ds9: multilingual model support for Django 1.2 and newer
 
 Multilingual models automatically overrides base class of multilingual models
 
@@ -18,20 +18,20 @@ class LazyInit(object):
     __version__ = '.'.join(VERSION)
 
     __deprecated__ = {
-        'models': ('multilingual.models', None),
         'MultilingualModelAdmin': ('multilingual.admin.options', 'MultilingualModelAdmin'),
-        'MultilingualInlineAdmin': ('multilingual.admin', 'MultilingualInlineAdmin'),
-        'ModelAdmin': ('multilingual.admin', 'MultilingualModelAdmin'),
+        'MultilingualInlineAdmin': ('multilingual.admin.inlines', 'MultilingualTabularInline'),
+        'ModelAdmin': ('multilingual.admin.options', 'MultilingualModelAdmin'),
+        'Manager': ('multilingual.db.models.manager', 'MultilingualManager'),
         # These were actually used so keep it for a while deprecated
         'Translation': ('multilingual.db.models.translation', 'BaseTranslationMeta'),
         'set_default_language': ('django.utils.translation', 'activate'),
-        # Moved
-        'Manager': ('multilingual.db.models.manager', 'MultilingualManager'),
     }
 
     __newnames__ = {
-        'ModelAdmin': 'MultilingualModelAdmin',
-        'Manager': 'MultilingualManager',
+        'MultilingualModelAdmin': 'multilingual.admin.MultilingualModelAdmin',
+        'MultilingualInlineAdmin': 'multilingual.admin.MultilingualTabularInline',
+        'ModelAdmin': 'multilingual.admin.MultilingualModelAdmin',
+        'Manager': 'multilingual.db.models.manager.MultilingualManager',
     }
 
     __modules_cache__ = {}
@@ -69,7 +69,7 @@ class LazyInit(object):
     def _warn_newname(self, attr):
         new = self.__newnames__[attr]
         warnings.warn("The name '%s' is deprecated in favor of '%s'" % (attr, new), DeprecationWarning)
-        
+
     def _warn_deprecated(self, attr, modname, objname):
         if objname:
             msg = "'multilingual.%s' is deprecated in favor of '%s.%s'" % (attr, modname, objname)

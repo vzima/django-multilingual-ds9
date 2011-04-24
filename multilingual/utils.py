@@ -1,5 +1,5 @@
 import warnings
-warnings.warn('Utils module deprecated.')
+warnings.warn("Module 'multilingual.utils' deprecated.", DeprecationWarning)
 
 from multilingual.languages import lock, release, is_locked, get_active
 
