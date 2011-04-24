@@ -75,8 +75,6 @@ class MultilingualModelBase(ModelBase):
             for language_code in get_all():
                 proxy = TranslationProxyField(field.name, language_code)
                 attrs[proxy.name] = proxy
-                proxy = TranslationProxyField(field.name, language_code, fallback=True)
-                attrs[proxy.name] = proxy
             proxy = TranslationProxyField(field.name, None)
             attrs[proxy.name] = proxy
             proxy = TranslationProxyField(field.name, None, fallback=True)
@@ -118,7 +116,7 @@ class MultilingualModel(models.Model):
         """
         Change save method to save translations when multilingual object is saved.
         """
-        super(MultilingualModel).save(force_insert, force_update, using)
+        super(MultilingualModel, self).save(force_insert, force_update, using)
         if not hasattr(self, '_translation_cache'):
             return
         for translation in self._translation_cache.values():
@@ -154,7 +152,7 @@ class MultilingualModel(models.Model):
         c_trans_model = self._meta.translation_model
 
         # see if translation was in the query
-        # WARNING! This must fail if we do not have all fields in query
+        # WARNING: This must fail if we do not have all fields in query
         translation_data = {}
         for field_name in [f.attname for f in c_trans_model._meta.fields]:
             # We know values of language_code and master_id, so we does not expect them to be in query
@@ -188,10 +186,9 @@ class MultilingualModel(models.Model):
 
         If the translation does not exist:
         1. if 'can_create' is True, this function will create one
-        2. otherwise, if 'fallback' is True, this function will search the
-           list of languages looking for the first existing translation
+        2. otherwise, if 'fallback' is True, this function will try fallback languages
         3. if all of the above fails to find a translation, raise the
-        TranslationModel.DoesNotExist exception
+            TranslationModel.DoesNotExist exception
         """
         self._fill_translation_cache(language_code)
 

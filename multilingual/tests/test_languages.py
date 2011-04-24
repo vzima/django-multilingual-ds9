@@ -15,6 +15,7 @@ class LanguagesTest(unittest.TestCase):
     LANGUAGES = (
         ('cs', u'Čeština'),
         ('en', u'English'),
+        ('en-us', u'American english'),
     )
     LANGUAGE_CODE = 'cs'
 
@@ -29,18 +30,20 @@ class LanguagesTest(unittest.TestCase):
     def tearDown(self):
         # Reset old language
         activate(self.old_language)
+        languages.release()
         settings.LANGUAGES = self.old_languages
         settings.LANGUAGE_CODE = self.old_language_code
 
     def test01_basics(self):
         self.assertEqual(languages.get_dict(), SortedDict(self.LANGUAGES))
-        self.assertEqual(languages.get_all(), ['cs', 'en'])
+        self.assertEqual(languages.get_all(), ['cs', 'en', 'en-us'])
         self.assertEqual(languages.get_settings_default(), 'cs')
         self.assertEqual(languages.get_active(), 'cs')
 
     def test02_fallbacks(self):
-        self.assertEqual(languages.get_fallbacks('cs'), ['en'])
+        self.assertEqual(languages.get_fallbacks('cs'), [])
         self.assertEqual(languages.get_fallbacks('en'), ['cs'])
+        self.assertEqual(languages.get_fallbacks('en-us'), ['en', 'cs'])
 
     def test03_language_change(self):
         activate('en')

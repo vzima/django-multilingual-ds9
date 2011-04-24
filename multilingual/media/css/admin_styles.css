@@ -1,0 +1,27 @@
+ul.language-tabs {
+    font-weight:bold;
+    padding-left: 0px;
+    margin-bottom: 4px;
+    margin-top: 4px;
+}
+
+ul.language-tabs li {
+    list-style-type: none;
+    display: inline;
+}
+
+ul.language-tabs li a {
+    position: relative;
+    padding: 4px 8px;
+    color: #000000;
+    border: 1px solid #CCCCCC;
+    background: url("/admin_media/img/admin/nav-bg.gif") repeat-x scroll center bottom white
+}
+
+ul.language-tabs li.selected span {
+    padding: 4px 8px;
+    border: 1px solid;
+    background: #bcd2e9;
+    color: #ffffff;
+    border-color: #CCCCCC #CCCCCC #bcd2e9 #CCCCCC
+}

@@ -4,10 +4,16 @@ This tests standard behaviour of multilingual models
 """
 import unittest
 
+from multilingual.languages import lock, release
+
 from models import Basic, Managing
 
 
 class ModelTest(unittest.TestCase):
+    def tearDown(self):
+        # Remove language locks if any remains
+        release()
+
     # Model tests
     def test01_fixtures(self):
         # Just test whether fixtures were loaded properly
@@ -20,9 +26,7 @@ class ModelTest(unittest.TestCase):
         self.assertEqual(obj.title, u'obsah ěščřžýáíé')
         self.assertEqual(obj.title_any, u'obsah ěščřžýáíé')
         self.assertEqual(obj.title_cs, u'obsah ěščřžýáíé')
-        self.assertEqual(obj.title_cs_any, u'obsah ěščřžýáíé')
         self.assertEqual(obj.title_en, u'content')
-        self.assertEqual(obj.title_en_any, u'content')
 
     def test03_proxy_fields_fallbacks(self):
         # Test proxy fields reading
@@ -30,26 +34,24 @@ class ModelTest(unittest.TestCase):
         self.assertEqual(obj.title, u'pouze čeština')
         self.assertEqual(obj.title_any, u'pouze čeština')
         self.assertEqual(obj.title_cs, u'pouze čeština')
-        self.assertEqual(obj.title_cs_any, u'pouze čeština')
         self.assertEqual(obj.title_en, None)
-        self.assertEqual(obj.title_en_any, u'pouze čeština')
+        lock('en')
+        self.assertEqual(obj.title, None)
+        self.assertEqual(obj.title_any, u'pouze čeština')
+        release()
 
         obj = Basic.objects.get(pk=3)
         # Do not forget we have activated czech language
         self.assertEqual(obj.title, None)
-        self.assertEqual(obj.title_any, u'only english')
+        self.assertEqual(obj.title_any, None)
         self.assertEqual(obj.title_cs, None)
-        self.assertEqual(obj.title_cs_any, u'only english')
         self.assertEqual(obj.title_en, u'only english')
-        self.assertEqual(obj.title_en_any, u'only english')
 
         obj = Basic.objects.get(pk=4)
         self.assertEqual(obj.title, None)
         self.assertEqual(obj.title_any, None)
         self.assertEqual(obj.title_cs, None)
-        self.assertEqual(obj.title_cs_any, None)
         self.assertEqual(obj.title_en, None)
-        self.assertEqual(obj.title_en_any, None)
 
     # Manager tests
     def test10_manager_filter(self):

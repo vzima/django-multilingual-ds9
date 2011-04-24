@@ -1,8 +1,7 @@
-from multilingual.languages import get_language, FALLBACK_FIELD_SUFFIX
-from multilingual.utils import GLL
+from multilingual.languages import get_active, FALLBACK_FIELD_SUFFIX
 
 
-def log_does_not_exist(parent, translation_name):
+def log_missing_translation(parent, translation_name):
     #print "TRANSLATION DOES NOT EXIST", type(parent), parent.pk, translation_name
     pass
     # TODO: use django log if available
@@ -15,15 +14,16 @@ class TranslationProxyField(object):
     Provides an access to translated fields
     Based on GenericForeignKey field
     """
-    def __init__(self, field_name, language_code, fallback=False):
+    def __init__(self, field_name, language_code=None, fallback=False):
         self._field_name = field_name
         self._language_code = language_code
         self._fallback = fallback
-        self.name = field_name
-        if language_code:
-            self.name += '_' + self.language_code.replace('-', '_')
+        names = [field_name]
+        if language_code is not None:
+            names.append(language_code.replace('-', '_'))
         if fallback:
-            self.name += FALLBACK_FIELD_SUFFIX
+            names.append(FALLBACK_FIELD_SUFFIX)
+        self.name = '_'.join(names)
 
     def contribute_to_class(self, cls, name):
         if self.name != name:
@@ -60,24 +60,12 @@ class TranslationProxyField(object):
         If _language_code is None we are the _current field, so we use the
         currently used language for lookups.
         """
-        if self._language_code:
+        if self._language_code is not None:
             return self._language_code
-
-        #TODO: this all should be part of some 'languages' function
-        if GLL.is_active:
-            return GLL.language_code
-
-        # This call is quite problematic when you are using commands, because django by default activates 'en-us' 
-        # even though it is not in your settings.LANGUAGES. In which case ValueError at line 56 is raised.
-        # For further details see Ticket #13859 http://code.djangoproject.com/ticket/13859
-        # Language 'en-us' is set in django/core/management/base.py:202-209 in BaseCommand.execute()
-
-        return get_language()
+        return get_active()
 
     @property
     def fallback(self):
-        if not self._language_code and GLL.is_active:
-            return False
         return self._fallback
 
     def __get__(self, instance, instance_type=None):
@@ -93,7 +81,7 @@ class TranslationProxyField(object):
                 self._field_name
             )
         except instance._meta.translation_model.DoesNotExist:
-            log_does_not_exist(instance, self.name)
+            log_missing_translation(instance, self.name)
             return None
 
     def __set__(self, instance, value):

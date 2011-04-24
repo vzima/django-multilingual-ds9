@@ -2,8 +2,8 @@ from django.db import connection
 from django.db.models.sql.query import Query
 
 from multilingual.db.models.fields import TranslationProxyField
-from multilingual.languages import get_table_alias, get_field_alias, get_language, \
-    get_all
+from multilingual.languages import get_table_alias, get_field_alias, \
+    get_all, get_active
 
 
 __ALL__ = ['MultilingualQuery']
@@ -24,8 +24,9 @@ class MultilingualQuery(Query):
 
         # Field is not multilingual, proceed as usual
         if not field or not isinstance(field, TranslationProxyField):
-            return super(MultilingualQuery, self).setup_joins(names, opts, alias, dupe_multis, allow_many,
-                                                              allow_explicit_fk, can_reuse, negate, process_extras)
+            return super(MultilingualQuery, self).setup_joins(
+                names, opts, alias, dupe_multis, allow_many, allow_explicit_fk, can_reuse, negate, process_extras
+            )
 
         if len(names) > 1:
             raise NotImplementedError('MultilingualQuery can not now handle relations through multilingual fields')
@@ -96,7 +97,7 @@ class MultilingualQuery(Query):
 
             # get language
             if field == related_name:
-                language_code = get_language()
+                language_code = get_active()
             else:
                 field_and_lang = field.rsplit('_', 1)
                 # Coincidental field name might occur if language_code is not correct, do not do anything as 

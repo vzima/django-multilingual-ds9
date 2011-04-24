@@ -3,7 +3,7 @@ from new import classobj
 from django.db import models
 from django.db.models.base import ModelBase
 
-from multilingual.languages import get_language_choices
+from multilingual.languages import get_dict
 
 
 # Translation meta options that will replaced with options from multilingual meta
@@ -43,7 +43,10 @@ class TranslationModelBase(ModelBase):
 
         # Handle unique constraints
         meta_attrs['unique_together'] = list(meta_attrs.get('unique_together', []))
-        meta_attrs['unique_together'] = [tuple(list(item) + ['language_code']) for item in meta_attrs['unique_together']]
+        meta_attrs['unique_together'] = [
+            tuple(list(item) + ['language_code'])
+            for item in meta_attrs['unique_together']
+        ]
         # append all unique fields to unique_together with 'language_code' field
         # and remove their uniqueness
         for item_name, item in trans_attrs.items():
@@ -75,8 +78,8 @@ class TranslationModel(models.Model):
 
     # Create explicit primary key, to prevent creation of other primary key
     id = models.AutoField(primary_key=True)
-    # TODO: what should be length of this field ???
-    language_code = models.CharField(max_length=15, choices=get_language_choices(), db_index=True)
+    # TODO: rename to 'language' or 'lang'
+    language_code = models.CharField(max_length=15, choices=get_dict().iteritems(), db_index=True)
     # ForeignKey to master is defined in class constructor
     #master = ForeignKey(cls, related_name=related_name)
 
@@ -90,9 +93,6 @@ class TranslationModel(models.Model):
         #related_name = 'translations'
         # This is temporarily disabled
         #ordering = ('language_code',)
-
-    def __str__(self):
-        return ("%s object, language_code=%s" % (self._meta.module_name, self.language_code))
 
     @classmethod
     def contribute_to_class(cls, main_cls, name):

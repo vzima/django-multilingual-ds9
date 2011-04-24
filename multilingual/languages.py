@@ -8,7 +8,7 @@ from django.utils.thread_support import currentThread
 from django.utils.translation import get_language
 
 
-FALLBACK_FIELD_SUFFIX = '_any'
+FALLBACK_FIELD_SUFFIX = 'any'
 
 _locks = {}
 
@@ -72,7 +72,7 @@ def get_active():
     # 3. get default language from settings
 
     # This is faster that call is_locked() method
-    language_code = _locks.get(currentThread(), None)
+    language_code = _locks.get(currentThread())
     if language_code is not None:
         return language_code
 
@@ -91,13 +91,16 @@ def get_fallbacks(language_code):
     """
     Returns enabled fallbacks for language.
     """
-    if is_locked():
-        return ()
+    fallbacks = []
+    language = language_code[:2]
+    if language != language_code and language in get_all():
+        fallbacks.append(language)
 
-    all = get_all()
-    all.pop(all.index(language_code))
-    #TODO: sort to have same language languages first (like 'en' for 'en-us') or use only them
-    return all
+    language = get_settings_default()
+    if language != language_code:
+        fallbacks.append(language)
+
+    return fallbacks
 
 
 def _db_prep_language_code(language_code):
@@ -119,9 +122,6 @@ def get_language_name(language_code):
 
 def get_language_bidi(language_code):
     return language_code in settings.LANGUAGES_BIDI
-
-def get_language_choices():
-    return settings.LANGUAGES
 
 def get_language_idx(language_code):
     return get_all().index(language_code)

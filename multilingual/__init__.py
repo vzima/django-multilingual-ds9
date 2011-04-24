@@ -19,7 +19,7 @@ class LazyInit(object):
 
     __deprecated__ = {
         'models': ('multilingual.models', None),
-        'MultilingualModelAdmin': ('multilingual.admin', 'MultilingualModelAdmin'),
+        'MultilingualModelAdmin': ('multilingual.admin.options', 'MultilingualModelAdmin'),
         'MultilingualInlineAdmin': ('multilingual.admin', 'MultilingualInlineAdmin'),
         'ModelAdmin': ('multilingual.admin', 'MultilingualModelAdmin'),
         # These were actually used so keep it for a while deprecated
@@ -28,25 +28,25 @@ class LazyInit(object):
         # Moved
         'Manager': ('multilingual.db.models.manager', 'MultilingualManager'),
     }
-    
+
     __newnames__ = {
         'ModelAdmin': 'MultilingualModelAdmin',
         'Manager': 'MultilingualManager',
     }
-    
+
     __modules_cache__ = {}
     __objects_cache__ = {}
-    
+
     def __init__(self, real):
         self.__real__ = real
-    
+
     def __getattr__(self, attr):
         if not attr in self.__deprecated__:
             return getattr(self.__real__, attr)
         if attr in self.__objects_cache__:
             return self.__objects_cache__[attr]
         return self._load(attr)
-    
+
     def _import(self, modname):
         if not hasattr(self, '_importlib'):
             mod = __import__('django.utils.importlib', fromlist=['django', 'utils'])
@@ -65,7 +65,7 @@ class LazyInit(object):
         self._warn_deprecated(attr, modname, objname)
         self.__objects_cache__[attr] = obj
         return obj
-    
+
     def _warn_newname(self, attr):
         new = self.__newnames__[attr]
         warnings.warn("The name '%s' is deprecated in favor of '%s'" % (attr, new), DeprecationWarning)
