@@ -1,3 +1,6 @@
+"""
+Queryset for multilingual models
+"""
 from django.db.models.query import QuerySet
 
 from multilingual.db.models.sql.query import MultilingualQuery

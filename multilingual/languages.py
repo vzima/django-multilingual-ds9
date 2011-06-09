@@ -24,12 +24,16 @@ def get_dict():
 
 def get_all():
     """
-    Tuple of defined language codes.
+    Returns tuple of defined language codes.
     """
     return get_dict().keys()
 
 
 def get_settings_default():
+    """
+    Returns default language from settings.
+    @raise ImproperlyConfigured: If LANGUAGE_CODE is not in LANGUAGES.
+    """
     #TODO: move it so it is checked only once
     if settings.LANGUAGE_CODE not in get_all():
         raise ImproperlyConfigured(
@@ -65,19 +69,19 @@ def is_locked():
 
 def get_active():
     """
+    Returns active language for multilingual
+
     Differs from django's get_language:
-    - always returns one of LANGUAGES in settings
+    - always returns one of settings.LANGUAGES
     - is influenced by language locks
     """
-    # 1. check locked language
-    # 2. get language from django if one of LANGUAGES
-    # 3. get default language from settings
-
-    # This is faster that call is_locked() method
+    # Check locked languages
+    # This might be faster than call is_locked() method
     language_code = _locks.get(currentThread())
     if language_code is not None:
         return language_code
 
+    # Get language from django
     language_code = get_language()
     if language_code not in get_all():
         # Try to use only first component
@@ -85,13 +89,20 @@ def get_active():
         if len(parts) == 2 and parts[0] in get_all():
             language_code = parts[0]
         else:
+            # Get default language from settings
             language_code = get_settings_default()
     return language_code
 
 
 def get_fallbacks(language_code):
     """
-    Returns enabled fallbacks for language.
+    Returns list of fallbacks for language.
+
+    Fallbacks are:
+      * language made of first two letters of original
+      * default language
+
+    All fallbacks must be set in settings.LANGUAGES and must differ from original language.
     """
     fallbacks = []
     language = language_code[:2]
@@ -106,14 +117,23 @@ def get_fallbacks(language_code):
 
 
 def _db_prep_language_code(language_code):
+    """
+    Updates language so it can be used as part of table name in database
+    """
     return language_code.replace('-', '_')
 
 
 def get_table_alias(table_name, language_code):
+    """
+    Creates database alias for table and language
+    """
     return '%s_%s' % (table_name, _db_prep_language_code(language_code))
 
 
 def get_field_alias(field_name, language_code):
+    """
+    Creates database alias for column and language
+    """
     return '_trans_%s_%s' % (field_name, _db_prep_language_code(language_code))
 
 

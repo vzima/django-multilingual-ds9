@@ -1,3 +1,6 @@
+"""
+Model form for multilingual models
+"""
 from django.forms.forms import get_declared_fields
 from django.forms.models import construct_instance, model_to_dict, fields_for_model, \
     ModelFormMetaclass, BaseModelForm, ModelFormOptions
@@ -8,6 +11,9 @@ from multilingual.languages import get_active
 
 
 class MultilingualModelFormMetaclass(ModelFormMetaclass):
+    """
+    Alters django model form to include fields for translated model fields
+    """
     #TODO: override and not copy whole __new__ function
     def __new__(cls, name, bases, attrs):
         formfield_callback = attrs.pop('formfield_callback', None)
@@ -54,6 +60,9 @@ class MultilingualModelFormMetaclass(ModelFormMetaclass):
 
 
 class BaseMultilingualModelForm(BaseModelForm):
+    """
+    Alters django model form update initials with data from translation model
+    """
     #TODO: unique checks and validation
     def __init__(self, data=None, files=None, auto_id='id_%s', prefix=None,
                  initial=None, error_class=ErrorList, label_suffix=':',
@@ -79,6 +88,9 @@ class BaseMultilingualModelForm(BaseModelForm):
         )
 
     def _post_clean(self):
+        """
+        Stores translation data into translation instance
+        """
         opts = self._meta
         translation = self.instance._get_translation(get_active(), can_create=True)
         if opts.exclude is None:

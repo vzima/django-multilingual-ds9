@@ -1,3 +1,6 @@
+"""
+Base model for tranlsation models
+"""
 from new import classobj
 
 from django.db import models
@@ -11,6 +14,11 @@ META_INHERITES = ('abstract', 'app_label')
 
 
 class BaseTranslationMeta:
+    """
+    Dummy class to be used as parent for Meta class of Translation model
+
+    Deprecated: Serves as parent class for Translation class of multilingual model.
+    """
     pass
 
 
@@ -74,6 +82,9 @@ class TranslationModelBase(ModelBase):
 
 
 class TranslationModel(models.Model):
+    """
+    Base class for translations
+    """
     __metaclass__ = TranslationModelBase
 
     # Create explicit primary key, to prevent creation of other primary key

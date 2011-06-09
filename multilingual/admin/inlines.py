@@ -1,3 +1,6 @@
+"""
+Inline model admin for multilingual models
+"""
 from django.contrib.admin.options import InlineModelAdmin
 from django.contrib.admin.util import flatten_fieldsets
 from django.utils.functional import curry
@@ -15,10 +18,17 @@ from multilingual.forms.formsets import multilingual_inlineformset_factory
 # This is more or less only shell, it requires more changes to be done, so it works properly
 
 class MultilingualInlineModelAdmin(InlineModelAdmin):
+    """
+    Inline model admin for multilingual models
+    """
     form = MultilingualModelForm
 
     def get_formset(self, request, obj=None, **kwargs):
-        """Returns a BaseInlineFormSet class for use in admin add/change views."""
+        """
+        Returns a BaseInlineFormSet class for use in admin add/change views.
+
+        UPDATE: use multilingual_inlineformset_factory
+        """
         if self.declared_fieldsets:
             fields = flatten_fieldsets(self.declared_fieldsets)
         else:

@@ -1,3 +1,6 @@
+"""
+Provides virtual field to access to translation from multilingual model instance.
+"""
 from multilingual.languages import get_active, FALLBACK_FIELD_SUFFIX
 
 
@@ -12,7 +15,8 @@ def log_missing_translation(parent, translation_name):
 class TranslationProxyField(object):
     """
     Provides an access to translated fields
-    Based on GenericForeignKey field
+
+    Based on code for GenericForeignKey field
     """
     def __init__(self, field_name, language_code=None, fallback=False):
         self._field_name = field_name

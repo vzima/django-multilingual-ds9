@@ -1,3 +1,6 @@
+"""
+Manager for multilingual models
+"""
 from django.db.models import Manager
 
 from multilingual.db.models.query import MultilingualQuerySet

@@ -1,3 +1,6 @@
+"""
+Options for multilingual models
+"""
 from django.db.models.options import Options
 
 

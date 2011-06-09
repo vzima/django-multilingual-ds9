@@ -6,7 +6,6 @@ Multilingual models automatically overrides base class of multilingual models
 Multilingual must be installed before any application with multilingual model
 or imported before any multilingual model class is loaded by django.
 """
-# FURTHER CHECK NEEDED
 #VERSION = ('0', '1', '44')
 #__version__ = '.'.join(VERSION)
 
@@ -22,16 +21,17 @@ class LazyInit(object):
         'MultilingualInlineAdmin': ('multilingual.admin.inlines', 'MultilingualTabularInline'),
         'ModelAdmin': ('multilingual.admin.options', 'MultilingualModelAdmin'),
         'Manager': ('multilingual.db.models.manager', 'MultilingualManager'),
-        # These were actually used so keep it for a while deprecated
         'Translation': ('multilingual.db.models.translation', 'BaseTranslationMeta'),
         'set_default_language': ('django.utils.translation', 'activate'),
     }
 
     __newnames__ = {
-        'MultilingualModelAdmin': 'multilingual.admin.MultilingualModelAdmin',
-        'MultilingualInlineAdmin': 'multilingual.admin.MultilingualTabularInline',
-        'ModelAdmin': 'multilingual.admin.MultilingualModelAdmin',
-        'Manager': 'multilingual.db.models.manager.MultilingualManager',
+        'MultilingualModelAdmin': 'admin.MultilingualModelAdmin',
+        'MultilingualInlineAdmin': 'admin.MultilingualTabularInline',
+        'ModelAdmin': 'admin.MultilingualModelAdmin',
+        'Manager': 'MultilingualManager',
+        'Translation': 'classobj',
+        'set_default_language': 'django.utils.translation.activate',
     }
 
     __modules_cache__ = {}
@@ -83,7 +83,7 @@ sys.modules[__name__] = LazyInit(sys.modules[__name__])
 
 from django.db.models.base import Model, ModelBase
 from multilingual.db.models.base import MultilingualModel, MultilingualModelBase
-
+from multilingual.db.models.manager import MultilingualManager
 
 def install_translation_library():
     # Change parent of model if it has Translation class

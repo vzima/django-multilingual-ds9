@@ -1,3 +1,6 @@
+"""
+Query for multilingual models
+"""
 from django.db import connection
 from django.db.models.sql.query import Query
 
@@ -6,10 +9,15 @@ from multilingual.languages import get_table_alias, get_field_alias, \
     get_all, get_active
 
 
-__ALL__ = ['MultilingualQuery']
+__all__ = ['MultilingualQuery']
 
 
 class MultilingualQuery(Query):
+    """
+    Query for multilingual models
+
+    For proper function we need to take care of JOINs between multilingual and translation tables.
+    """
     def setup_joins(self, names, opts, alias, dupe_multis, allow_many=True,
             allow_explicit_fk=False, can_reuse=None, negate=False,
             process_extras=True):

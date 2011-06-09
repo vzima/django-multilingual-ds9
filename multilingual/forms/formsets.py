@@ -1,3 +1,6 @@
+"""
+Model formset for multilingual models
+"""
 from django.forms.formsets import formset_factory
 from django.forms.models import BaseModelFormSet, BaseInlineFormSet, _get_foreign_key
 

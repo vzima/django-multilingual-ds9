@@ -1,3 +1,6 @@
+"""
+Model admin for multilingual models
+"""
 from django.contrib.admin import ModelAdmin
 from django.contrib.admin.util import flatten_fieldsets
 from django.utils.encoding import force_unicode
@@ -11,6 +14,9 @@ from multilingual.languages import get_dict, get_active, lock, release
 
 
 class MultilingualModelAdmin(ModelAdmin):
+    """
+    Model admin for multilingual models
+    """
     form = MultilingualModelForm
 
     # use special template to render tabs for languages on top
