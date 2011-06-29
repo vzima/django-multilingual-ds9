@@ -44,7 +44,7 @@ class MultilingualModelFormMetaclass(ModelFormMetaclass):
                 if opts.exclude is None:
                     exclude = ('id', 'language_code', 'master')
                 else:
-                    exclude = list(opts.exclude) + ('id', 'language_code', 'master')
+                    exclude = list(opts.exclude) + ['id', 'language_code', 'master']
                 fields.update(fields_for_model(
                     translation_model, opts.fields, exclude, opts.widgets, formfield_callback
                 ))
@@ -80,7 +80,7 @@ class BaseMultilingualModelForm(BaseModelForm):
                     if opts.exclude is None:
                         exclude = ('id', 'language_code', 'master')
                     else:
-                        exclude = list(opts.exclude) + ('id', 'language_code', 'master')
+                        exclude = list(opts.exclude) + ['id', 'language_code', 'master']
                     initial_data = model_to_dict(translation, opts.fields, exclude)
         initial_data.update(initial or {})
         super(BaseMultilingualModelForm, self).__init__(
@@ -96,7 +96,7 @@ class BaseMultilingualModelForm(BaseModelForm):
         if opts.exclude is None:
             exclude = ('id', 'language_code', 'master')
         else:
-            exclude = list(opts.exclude) + ('id', 'language_code', 'master')
+            exclude = list(opts.exclude) + ['id', 'language_code', 'master']
         # Update instance translation
         construct_instance(self, translation, opts.fields, exclude)
         super(BaseMultilingualModelForm, self)._post_clean()
