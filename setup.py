@@ -1,22 +1,25 @@
+# -*- encoding: utf-8 -*-
 from setuptools import setup, find_packages
 
-version = __import__('multilingual').__version__
+# TODO: Update __init__ to enable this version import
+#version = __import__('multilingual').__version__
+version = '0.2.0.beta'
 
 setup(
-    name = 'django-multilingual-ng',
+    name = 'django-multilingual-ds9',
     version = version,
-    description = 'Multilingual extension for Django - NG',
-    author = 'Jonas Obrist',
-    url = 'http://github.com/ojii/django-multilingual-ng',
-    packages = find_packages(exclude=['parts','downloads','eggs', '.installed.cfg', 'bin', 'develop-eggs']),
+    description = 'Multilingual extension for Django - Deep Space 9',
+    author = 'Vlastimil Zíma',
+    url = 'http://github.com/vzima/django-multilingual-ds9',
+    # TODO: excluding old tests
+    packages = find_packages(exclude=['tests', 'tests.*']),
     zip_safe=False,
     package_data={
         'multilingual': [
-            'templates/admin/*.html',
-            'templates/admin/multilingual/*.html',
-            'templates/admin/multilingual/edit_inline/*.html',
+            'templates/multilingual/admin/*.html',
             'flatpages/templates/flatpages/*.html',
-            'media/multilingual/admin/css/style.css',
+            #TODO: Check proper media location
+            'media/css/admin_styles.css',
         ],
     },
 )

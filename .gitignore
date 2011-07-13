@@ -1,4 +1,7 @@
 *.pyc
 .project
 .pydevproject
-.settings
+.settings/
+build/
+django_multilingual_ds9.egg-info/
+
