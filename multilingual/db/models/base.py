@@ -109,8 +109,8 @@ class MultilingualModel(models.Model):
         abstract = True
 
     def __init__(self, *args, **kwargs):
-        super(MultilingualModel, self).__init__(*args, **kwargs)
         self._translation_cache = {}
+        super(MultilingualModel, self).__init__(*args, **kwargs)
 
     def save(self, force_insert=False, force_update=False, using=None):
         """

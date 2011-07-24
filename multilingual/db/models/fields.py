@@ -2,17 +2,17 @@
 Provides virtual field to access to translation from multilingual model instance.
 """
 from multilingual.languages import get_active, FALLBACK_FIELD_SUFFIX
+try:
+    from django.utils.log import logger
+except ImportError:
+    from logging import root as logger
 
 
-def log_missing_translation(parent, translation_name):
-    #print "TRANSLATION DOES NOT EXIST", type(parent), parent.pk, translation_name
-    pass
-    # TODO: use django log if available
-    #from  django.utils.log import debug
-    #debug('some message')
-
-
-class TranslationProxyField(object):
+# It would be better if field could be derived just from object, but property is currently
+# easiest way to enable initiation of multilingual models with translations
+# Problem reported to Django: #16508
+#class TranslationProxyField(object):
+class TranslationProxyField(property):
     """
     Provides an access to translated fields
 
@@ -28,12 +28,12 @@ class TranslationProxyField(object):
         if fallback:
             names.append(FALLBACK_FIELD_SUFFIX)
         self.name = '_'.join(names)
+        super(TranslationProxyField, self).__init__()
 
     def contribute_to_class(self, cls, name):
         if self.name != name:
             raise ValueError('Field proxy %s is added to class under bad attribute name.' % self)
         self.model = cls
-        self.cache_attr = "_%s_cache" % name
         cls._meta.add_virtual_field(self)
 
         #===============================================================================================================
@@ -44,8 +44,6 @@ class TranslationProxyField(object):
         # Connect myself as the descriptor for this field
         setattr(cls, name, self)
 
-    # This might be used to create multilingual model instance with translations in __init__ args
-    # Example: SomeMultilingualModel(trans_field_en='some', trans_field_cs='neco')
     #===================================================================================================================
     # def instance_pre_init(self, signal, sender, args, kwargs, **_kwargs):
     #    """
@@ -85,7 +83,7 @@ class TranslationProxyField(object):
                 self._field_name
             )
         except instance._meta.translation_model.DoesNotExist:
-            log_missing_translation(instance, self.name)
+            logger.info("Translation '%s' for '%s' (pk='%s') does not exist.", self.name, type(instance), instance.pk)
             return None
 
     def __set__(self, instance, value):

@@ -12,6 +12,7 @@ from models import Basic, Managing
 class ModelTest(unittest.TestCase):
     def tearDown(self):
         # Remove language locks if any remains
+        # TODO: rollback after each test, to get database to the same initial state
         release()
 
     # Model tests
@@ -57,35 +58,32 @@ class ModelTest(unittest.TestCase):
     def test10_manager_filter(self):
         queryset = Managing.objects.filter(name_cs=u'č')
         self.assertEqual(len(queryset), 1)
-        self.assertEqual(queryset[0].shortcut, 'c2')
+        self.assertEqual(queryset[0].shortcut, u'c2')
 
     def test11_manager_exclude(self):
         queryset = Managing.objects.exclude(name_en__isnull=True)
         result = set(obj.shortcut for obj in queryset)
         self.assertEqual(len(queryset), 11)
         self.assertEqual(len(result), 11)
-        self.assertEqual(result, set(['a', 'b', 'c', 'd', 'e', 'h', 'i', 'w', 'x', 'y', 'z']))
+        self.assertEqual(result, set([u'a', u'b', u'c', u'd', u'e', u'h', u'i', u'w', u'x', u'y', u'z']))
 
-#TODO: enable creation
-#=======================================================================================================================
-#    def test12_manager_create(self):
-#        obj = Managing.objects.create(shortcut='n2', name_cs='ň')
-#        self.assertEqual(obj.shortcut, 'n2')
-#        self.assertEqual(obj.name, 'ň')
-# 
-#    def test13_manager_get_or_create(self):
-#        obj, created = Managing.objects.get_or_create(shortcut='n2', name_cs='ň')
-#        self.assertEqual(created, False)
-#        self.assertEqual(obj.shortcut, 'n2')
-#        self.assertEqual(obj.name, 'ň')
-# 
-#    def test14_manager_delete(self):
-#        obj = Managing._meta.translation_model.objects.get(name='ň')
-#        self.assertEqual(obj.master.shortcut, 'n2')
-#        Managing.objects.filter(shortcut='n2').delete()
-#        ManagingTranslation = Managing._meta.translation_model
-#        self.assertRaises(ManagingTranslation.DoesNotExist, ManagingTranslation.objects.get, name='ň')
-#=======================================================================================================================
+    def test12_manager_create(self):
+        obj = Managing.objects.create(shortcut=u'n2', name_cs=u'ň')
+        self.assertEqual(obj.shortcut, u'n2')
+        self.assertEqual(obj.name, u'ň')
+
+    def test13_manager_get_or_create(self):
+        obj, created = Managing.objects.get_or_create(shortcut=u'n2', name_cs=u'ň')
+        self.assertEqual(created, False)
+        self.assertEqual(obj.shortcut, u'n2')
+        self.assertEqual(obj.name, u'ň')
+
+    def test14_manager_delete(self):
+        ManagingTranslation = Managing._meta.translation_model
+        obj = ManagingTranslation.objects.get(name=u'ň')
+        self.assertEqual(obj.master.shortcut, u'n2')
+        Managing.objects.filter(shortcut=u'n2').delete()
+        self.assertRaises(ManagingTranslation.DoesNotExist, ManagingTranslation.objects.get, name=u'ň')
 
     def test15_manager_order_by(self):
         # If you do not know it, ordering is dependent on locales.
@@ -102,18 +100,18 @@ class ModelTest(unittest.TestCase):
     def test16_manager_select_related(self):
         obj = Managing.objects.select_related('translations').get(pk=1)
         #TODO: we should check instead that translation cache is created without subsequent SQL request
-        self.assertEqual(obj._trans_name_cs, 'a')
+        self.assertEqual(obj._trans_name_cs, u'a')
 
     def test17_manager_values(self):
         names = [u'e', u'é', u'ě']
-        values = Managing.objects.filter(shortcut__startswith='e').values('name')
+        values = Managing.objects.filter(shortcut__startswith=u'e').values('name')
         for item in values:
             names.pop(names.index(item['name']))
         self.assertEqual(names, [])
 
     def test18_manager_values_list(self):
         names = set([u'e', u'é', u'ě'])
-        values = Managing.objects.filter(shortcut__startswith='e').values_list('name', flat=True)
+        values = Managing.objects.filter(shortcut__startswith=u'e').values_list('name', flat=True)
         self.assertEqual(set(values), names)
 
     #TODO: test other manager methods
