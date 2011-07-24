@@ -1,18 +1,18 @@
 """
 Pre-processing of language settings and other language related functions.
 """
+from threading import local
+
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.datastructures import SortedDict
-from django.utils.thread_support import currentThread
 from django.utils.translation import get_language
-
 
 FALLBACK_FIELD_SUFFIX = 'any'
 
 #TODO: enable locks included in each other
 #TODO: decorator for language locks
-_locks = {}
+_lock = local()
 
 
 def get_dict():
@@ -50,21 +50,21 @@ def lock(language_code):
     """
     if language_code not in get_all():
         raise ValueError("Invalid language '%s'" % language_code)
-    _locks[currentThread()] = language_code
+    _lock.value = language_code
 
 
 def release():
     """
     Releases language lock
     """
-    _locks.pop(currentThread(), None)
-
+    if hasattr(_lock, "value"):
+        del _lock.value
 
 def is_locked():
     """
     Returns state of lock
     """
-    return currentThread() in _locks
+    return hasattr(_lock, "value")
 
 
 def get_active():
@@ -77,7 +77,7 @@ def get_active():
     """
     # Check locked languages
     # This might be faster than call is_locked() method
-    language_code = _locks.get(currentThread())
+    language_code = getattr(_lock, "value", None)
     if language_code is not None:
         return language_code
 
