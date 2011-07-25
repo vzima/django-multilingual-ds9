@@ -69,7 +69,7 @@ class MultilingualModelBase(ModelBase):
         attrs['translation_model'] = c_trans_model
 
         # Add proxies for translated fields into attrs
-        for field in c_trans_model._meta.fields:
+        for field in (c_trans_model._meta.fields + c_trans_model._meta.many_to_many):
             if field.name in ('id', 'language_code', 'master'):
                 continue
             for language_code in get_all():
