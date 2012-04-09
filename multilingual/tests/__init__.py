@@ -15,7 +15,7 @@ def multilingual_apps(namespace=True, runtests=False):
     `django.contrib.gis.tests` that can be used with the current
     database and the spatial libraries that are installed.
     """
-    apps = ['core', 'admin']
+    apps = ('core', 'forms', 'admin')
 
     if runtests:
         return [('multilingual.tests', app) for app in apps]

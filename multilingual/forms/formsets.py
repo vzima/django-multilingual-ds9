@@ -7,7 +7,9 @@ from django.forms.models import BaseModelFormSet, BaseInlineFormSet, _get_foreig
 from multilingual.forms.forms import MultilingualModelForm, multilingual_modelform_factory
 
 
-#HACK: Copied to change modelform_factory
+#TODO: This method uses altered modelform_factory which has to be added as until Django 1.4 it was improperly
+# implemented and had to be overridden. Remove this method when Django 1.3 will not be supported and use vanilla one.
+# Copied to change modelform_factory.
 def multilingual_modelformset_factory(model, form=MultilingualModelForm, formfield_callback=None,
                          formset=BaseModelFormSet,
                          extra=1, can_delete=False, can_order=False,
@@ -23,7 +25,7 @@ def multilingual_modelformset_factory(model, form=MultilingualModelForm, formfie
     return FormSet
 
 
-#HACK: Copied to change modelformset_factory
+#TODO: Same as above
 def multilingual_inlineformset_factory(parent_model, model, form=MultilingualModelForm,
                           formset=BaseInlineFormSet, fk_name=None,
                           fields=None, exclude=None,

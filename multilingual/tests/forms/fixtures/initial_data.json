@@ -1,0 +1,67 @@
+[
+    {
+        "pk": 1,
+        "model": "forms.foo",
+        "fields": {
+            "description": "regular ěščřžýáíé"
+        }
+    },
+    {
+        "pk": 2,
+        "model": "forms.foo",
+        "fields": {
+            "description": "only czech"
+        }
+    },
+    {
+        "pk": 3,
+        "model": "forms.foo",
+        "fields": {
+            "description": "only english"
+        }
+    },
+    {
+        "pk": 4,
+        "model": "forms.foo",
+        "fields": {
+            "description": "no translation"
+        }
+    },
+
+    {
+        "pk": 1,
+        "model": "forms.footranslation",
+        "fields": {
+            "master": 1,
+            "language_code": "cs",
+            "title": "obsah ěščřžýáíé"
+        }
+    },
+    {
+        "pk": 2,
+        "model": "forms.footranslation",
+        "fields": {
+            "master": 1,
+            "language_code": "en",
+            "title": "content"
+        }
+    },
+    {
+        "pk": 3,
+        "model": "forms.footranslation",
+        "fields": {
+            "master": 2,
+            "language_code": "cs",
+            "title": "pouze čeština"
+        }
+    },
+    {
+        "pk": 4,
+        "model": "forms.footranslation",
+        "fields": {
+            "master": 3,
+            "language_code": "en",
+            "title": "only english"
+        }
+    }
+]
