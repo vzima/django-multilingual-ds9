@@ -22,7 +22,6 @@ class MultilingualModelAdmin(ModelAdmin):
     # use special template to render tabs for languages on top
     change_form_template = "multilingual/admin/change_form.html"
 
-    #TODO: add css styles somehow
     #TODO: select_related on queryset of required
     #TODO: select_related on get_object if required
 
@@ -87,10 +86,12 @@ class MultilingualModelAdmin(ModelAdmin):
         finally:
             release()
 
-    def change_view(self, request, object_id, extra_context=None):
+    def change_view(self, request, object_id, **kwargs):
         """
         Lock language over change_view and add extra_context
         """
+        # In Django 1.4 number of arguments have changed.
+        extra_context = kwargs.get('extra_context')
         try:
             lock(request.POST.get('language', request.GET.get('language', get_active())))
 
@@ -103,6 +104,7 @@ class MultilingualModelAdmin(ModelAdmin):
                 ),
             }
             context.update(extra_context or {})
-            return super(MultilingualModelAdmin, self).change_view(request, object_id, context)
+            kwargs['extra_context'] = context
+            return super(MultilingualModelAdmin, self).change_view(request, object_id, **kwargs)
         finally:
             release()
