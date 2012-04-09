@@ -1,46 +1,44 @@
 ## Django Multilingual Deep Space 9 ##
 
-Django-multilingual-DS9 is a branch of django-multilingual,
-forked from django-multilingual-ng compatible with
-Django 1.2 and 1.3 with restructured core.
+Django-multilingual-DS9 is a branch of django-multilingual, forked from django-multilingual-ng, with restructured core.
 
-Django-multilingual-ds9 does not have to be fully compatible with django-multilingual-ng,
-but basic should not differ.
+Compatibility:
+* Django 1.3
+* Django 1.4
 
-**Some of this is now only a goal and does not have to work**
+Django-multilingual-ds9 does not have to be fully compatible with django-multilingual-ng, but basic features should not
+differ.
 
-### Changes from django-multilingual-ng ###
-* Always use only languages from `LANGUAGES` setting
-* Database differs in changes of suffix from `_translation` to `translation`.
-    Update your tables, indexes and sequences or alter db_table in multilingual model Meta options
+### Features ###
+* Use only language codes from `LANGUAGES` setting.
 * Model structure
-  * `FIELD_NAME` access is mostly kept. It will return translation of field for current language or `None`
-  * `FIELD_NAME_any` access differs in fallback. It will return translation of field for current language or
-    fallback language or default language or `None`. Fallback language code are only two lettered and are used
-    only if available in `LANGUAGES`.
-  * `RELATED_NAME` returns manager for translation model with filter to master object.
+  * `FIELD_NAME` returns translation of field for current language or `None` if no translation exists.
+  * `FIELD_NAME_any` returns translation of field for current language or fallback language or default language or
+    `None` if neither translation exists. Fallback language codes are only those with two letters and are used
+    only if available in `LANGUAGES` setting.
+  * `FIELD_NAME_language` returns translation of field for the language or `None` if translation does not exist.
+  * `RELATED_NAME` (default: translations) returns manager for translation model with filter to master object.
 * Queries
-  Queries behaves as expected, lower is more a description of background
-  * `get/filter/exclude(FIELD_NAME)` creates LEFT OUTER JOIN to translation table with condition for language
+  * `get/filter/exclude(FIELD_NAME)` creates LEFT OUTER JOIN to translation table with condition for current language
     and required filter.
     Take care if you are using `FIELD_NAME__isnull=True` lookup, because this query returns both
     objects with missing translations and objects with missing field in translation.
+  * `get/filter/exclude(FIELD_NAME_lanaguge)` creates LEFT OUTER JOIN to translation table with condition for the
+    language and required filter.
   * `order_by/values/values_list(FIELD_NAME)` works same as filter-like queries.
     Remember that these will keep objects with no translation in result set unless you manually remove them.
-  * `select_related(RELATED_NAME)` does what expected, tries to cache translation in other query
-  * `get/filter/exclude(RELATED_NAME)` selection by existence and parameters of whole translation object
+  * `order_by/values/values_list(FIELD_NAME_language)` same as above.
+  * `select_related(RELATED_NAME)` works as expected, tries to cache translation in other query.
+  * `get/filter/exclude(RELATED_NAME)` selection by existence and parameters of whole translation object.
 * Administration
-  * `search_fields` does not handle `FIELD_NAME_LANGCODE`, you need to use regular foreign key lookup `RELATED_NAME__FIELD_NAME`
+  * `search_fields` does not handle `FIELD_NAME_LANGCODE`, you need to use regular foreign key lookup
+    `RELATED_NAME__FIELD_NAME`
 
-### Old features ###
-I have not yet decided what to do with following features:
-* Model structure
-  * `FIELD_NAME_language` access is mostly kept. It will return translation of field for current language or `None`
-* Queries
-  Queries behaves as expected, lower is more a description of background
-  * `get/filter/exclude(FIELD_NAME_lanaguge)` creates LEFT OUTER JOIN to translation table with condition for language
-    and required filter.
-  * `order_by/values/values_list(FIELD_NAME_language)` works same as filter-like queries.
+### Known bugs ###
+* Django admin validation is rigid and does not handle customized models, especially virtual fields which are used here.
+Thus it the supported solution is to write your own form for ModelAdmins if you want to do some changes and not to use
+ModelAdmin attributes for form customizing.
+
 
 ### Examples ###
 You may see tests for more specific usage
