@@ -4,6 +4,7 @@ This tests standard behaviour of multilingual models
 """
 import unittest
 
+from django import get_version
 from django.contrib.admin.views.main import ChangeList
 from django.test.client import RequestFactory
 
@@ -33,7 +34,28 @@ class ModelAdminTest(unittest.TestCase):
         request = REQ_FACTORY.get('/admin/admintests/', {'q': 'obsah'})
         # Second argument is admin_site, but it is not used in this test
         model_admin = MultilingualModelAdmin(AdminTests, None)
-        cl = ChangeList(request, AdminTests, ('__str__', ), (), (), None, ('translations__title', ), False, 100, (),
-                        model_admin)
-        self.assertEqual(len(cl.get_query_set()), 1)
-        self.assertEqual(cl.get_query_set()[0].description, u'description ěščřžýáíé')
+        kwargs = {'request': request,
+                  'model': AdminTests,
+                  'list_display': ('__str__', ),
+                  'list_display_links': (),
+                  'list_filter': (),
+                  'date_hierarchy': None,
+                  'search_fields': ('translations__title', ),
+                  'list_select_related': False,
+                  'list_per_page': 100,
+                  'list_editable': (),
+                  'model_admin': model_admin}
+        # This argument was added in Django 1.4
+        if get_version() >= '1.4':
+            kwargs['list_max_show_all'] = 200
+
+        cl = ChangeList(**kwargs)
+
+        # This argument was added in Django 1.4
+        if get_version() >= '1.4':
+            queryset = cl.get_query_set(request)
+        else:
+            queryset = cl.get_query_set()
+
+        self.assertEqual(len(queryset), 1)
+        self.assertEqual(queryset[0].description, u'description ěščřžýáíé')
