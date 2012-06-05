@@ -5,21 +5,14 @@ from setuptools import setup, find_packages
 #version = __import__('multilingual').__version__
 version = '0.2.0.beta'
 
-setup(
-    name = 'django-multilingual-ds9',
-    version = version,
-    description = 'Multilingual extension for Django - Deep Space 9',
-    author = 'Vlastimil Zíma',
-    url = 'http://github.com/vzima/django-multilingual-ds9',
-    # TODO: excluding old tests
-    packages = find_packages(exclude=['tests', 'tests.*']),
-    zip_safe=False,
-    package_data={
-        'multilingual': [
-            'templates/multilingual/admin/*.html',
-            'flatpages/templates/flatpages/*.html',
-            #TODO: Check proper media location
-            'media/css/admin_styles.css',
-        ],
-    },
-)
+
+setup(name='django-multilingual-ds9',
+      version=version,
+      description='Multilingual extension for Django - Deep Space 9',
+      author='Vlastimil Zíma',
+      url='http://github.com/vzima/django-multilingual-ds9',
+      packages=find_packages(exclude=['tests', 'tests.*']),
+      zip_safe=False,
+      package_data={'multilingual': ['templates/multilingual/admin/*.html', 'flatpages/templates/flatpages/*.html',
+                                     'static/multilingual/css/admin_styles.css'],
+                    'multilingual.flatpages': ['templates/flatpages/*.html', ]})
