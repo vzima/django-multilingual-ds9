@@ -30,12 +30,12 @@ class TestModelAdmin(MultilingualTestCase):
         self.assertTemplateUsed(response, 'multilingual/admin/change_form.html')
         self.assertIsInstance(response.context_data['adminform'].form, MultilingualModelForm)
         self.assertEqual(response.context_data['title'], u'Add multiling for language Česky')
-        self.assertEqual(response.context_data['LANGUAGE'], 'cs')
+        self.assertEqual(response.context_data['ML_LANGUAGE'], 'cs')
 
     def test_add_view_post(self):
         # Check translation is created for correct language
         model_admin = MultilingualModelAdmin(Multiling, site)
-        data = {'csrfmiddlewaretoken': '1', 'language': 'en', 'name': 'admin', 'title': 'Admin', '_popup': '1'}
+        data = {'csrfmiddlewaretoken': '1', 'ml_language': 'en', 'name': 'admin', 'title': 'Admin', '_popup': '1'}
         reqf = RequestFactory()
         reqf.cookies['csrftoken'] = '1'
         request = reqf.post('/dummy/', data=data)
@@ -54,7 +54,7 @@ class TestModelAdmin(MultilingualTestCase):
         data = {'csrfmiddlewaretoken': '1', 'name': 'admin', 'title': 'Admin', '_popup': '1'}
         reqf = RequestFactory()
         reqf.cookies['csrftoken'] = '1'
-        request = reqf.post('/dummy/?language=en', data=data)
+        request = reqf.post('/dummy/?ml_language=en', data=data)
         request.user = User.objects.get(pk=1)
         response = model_admin.add_view(request)
 
@@ -72,12 +72,13 @@ class TestModelAdmin(MultilingualTestCase):
         self.assertTemplateUsed(response, 'multilingual/admin/change_form.html')
         self.assertIsInstance(response.context_data['adminform'].form, MultilingualModelForm)
         self.assertEqual(response.context_data['title'], u'Change multiling for language Česky')
-        self.assertEqual(response.context_data['LANGUAGE'], 'cs')
+        self.assertEqual(response.context_data['ML_LANGUAGE'], 'cs')
 
     def test_change_view_post(self):
         # Check translation is updated for correct language
         model_admin = MultilingualModelAdmin(Multiling, site)
-        data = {'csrfmiddlewaretoken': '1', 'language': 'en', 'name': 'changed', 'title': 'Changed', '_continue': '1'}
+        data = {'csrfmiddlewaretoken': '1', 'ml_language': 'en', 'name': 'changed', 'title': 'Changed',
+                '_continue': '1'}
         reqf = RequestFactory()
         reqf.cookies['csrftoken'] = '1'
         request = reqf.post('/dummy/', data=data)
@@ -98,7 +99,7 @@ class TestModelAdmin(MultilingualTestCase):
         data = {'csrfmiddlewaretoken': '1', 'name': 'changed', 'title': 'Changed', '_continue': '1'}
         reqf = RequestFactory()
         reqf.cookies['csrftoken'] = '1'
-        request = reqf.post('/dummy/?language=en', data=data)
+        request = reqf.post('/dummy/?ml_language=en', data=data)
         request.user = User.objects.get(pk=1)
         request._messages = Mock()
         response = model_admin.change_view(request, '1')
