@@ -70,7 +70,7 @@ class MultilingualModelAdmin(ModelAdmin):
         # Django 1.4 postponed template rendering, so we have to pass updated language in context and avoid context
         # processor.
         # TODO: Make this a hidden form field.
-        context['ML_LANGUAGE'] = get_active()
+        context['ML_ADMIN_LANGUAGE'] = get_active()
         return super(MultilingualModelAdmin, self).render_change_form(request, context, **kwargs)
 
     def add_view(self, request, form_url='', extra_context=None):
@@ -78,7 +78,7 @@ class MultilingualModelAdmin(ModelAdmin):
         Lock language over add_view and add extra_context
         """
         try:
-            lock(request.POST.get('ml_language', request.GET.get('ml_language', get_active())))
+            lock(request.POST.get('ml_admin_language', request.GET.get('ml_admin_language', get_active())))
 
             model = self.model
             opts = model._meta
@@ -100,7 +100,7 @@ class MultilingualModelAdmin(ModelAdmin):
         # In Django 1.4 number of arguments have changed.
         extra_context = kwargs.get('extra_context')
         try:
-            lock(request.POST.get('ml_language', request.GET.get('ml_language', get_active())))
+            lock(request.POST.get('ml_admin_language', request.GET.get('ml_admin_language', get_active())))
 
             model = self.model
             opts = model._meta
