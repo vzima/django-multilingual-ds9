@@ -1,11 +1,15 @@
+from __future__ import unicode_literals
+
 from django.db import models
 from django.contrib.sites.models import Site
 from django.utils.translation import ugettext_lazy as _
-from multilingual.db.models.manager import MultilingualManager
+from django.utils.encoding import python_2_unicode_compatible
+
+from multilingual import MultilingualModel, MultilingualManager
 
 
-class MultilingualFlatPage(models.Model):
-    # non-translatable fields first
+@python_2_unicode_compatible
+class FlatPage(MultilingualModel):
     url = models.CharField(_('URL'), max_length=100, db_index=True)
     enable_comments = models.BooleanField(_('enable comments'))
     template_name = models.CharField(_('template name'), max_length=70, blank=True,
@@ -15,31 +19,17 @@ class MultilingualFlatPage(models.Model):
 
     objects = MultilingualManager()
 
-    # And now the translatable fields
     class Translation:
-        """
-        The definition of translation model.
-
-        The multilingual machinery will automatically add these to the
-        Category class:
-
-         * get_title(language_id=None)
-         * set_title(value, language_id=None)
-         * get_content(language_id=None)
-         * set_content(value, language_id=None)
-         * title and content properties using the methods above
-        """
         title = models.CharField(_('title'), max_length=200)
         content = models.TextField(_('content'), blank=True)
 
     class Meta:
         db_table = 'multilingual_flatpage'
-        verbose_name = _('multilingual flat page')
-        verbose_name_plural = _('multilingual flat pages')
+        verbose_name = _('flat page')
+        verbose_name_plural = _('flat pages')
         ordering = ('url',)
 
-    def __unicode__(self):
-        # note that you can use name and description fields as usual
+    def __str__(self):
         return u"%s -- %s" % (self.url, self.title)
 
     def get_absolute_url(self):

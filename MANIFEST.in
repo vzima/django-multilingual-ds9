@@ -1,4 +1,5 @@
 recursive-include multilingual/templates *
 recursive-include multilingual/static *
 recursive-include multilingual/tests/ml_test_app/fixtures *
-recursive-include multilingual/flatpages/templates *
+recursive-include multilingual/mlflatpages/fixtures *
+recursive-include multilingual/mlflatpages/tests/templates *

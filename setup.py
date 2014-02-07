@@ -12,4 +12,5 @@ setup(name='django-multilingual-ds9',
       packages=find_packages(),
       package_data={'multilingual': ['templates/multilingual/admin/*.html', 'static/multilingual/css/admin_styles.css'],
                     'multilingual.tests.ml_test_app': ['fixtures/*'],
-                    'multilingual.flatpages': ['templates/flatpages/*.html', ]})
+                    'multilingual.mlflatpages': ['fixtures/*.json'],
+                    'multilingual.mlflatpages.tests': ['templates/*.html', 'templates/*/*.html']})

@@ -1,0 +1,138 @@
+[
+    {
+        "pk": 1,
+        "model": "mlflatpages.flatpage",
+        "fields": {
+            "registration_required": false,
+            "url": "/flatpage/",
+            "template_name": "",
+            "sites": [
+                1
+            ],
+            "enable_comments": false
+        }
+    },
+    {
+        "pk": 1,
+        "model": "mlflatpages.flatpagetranslation",
+        "fields": {
+            "master": 1,
+            "language_code": "en",
+            "title": "A Flatpage",
+            "content": "Isn't it flat!"
+        }
+    },
+    {
+        "pk": 2,
+        "model": "mlflatpages.flatpagetranslation",
+        "fields": {
+            "master": 1,
+            "language_code": "cs",
+            "title": "Stránka",
+            "content": "Není plochá!"
+        }
+    },
+
+    {
+        "pk": 2,
+        "model": "mlflatpages.flatpage",
+        "fields": {
+            "registration_required": false,
+            "url": "/location/flatpage/",
+            "template_name": "",
+            "sites": [
+                1
+            ],
+            "enable_comments": false
+        }
+    },
+    {
+        "pk": 3,
+        "model": "mlflatpages.flatpagetranslation",
+        "fields": {
+            "master": 2,
+            "language_code": "en",
+            "title": "A Nested Flatpage",
+            "content": "Isn't it flat and deep!"
+        }
+    },
+    {
+        "pk": 4,
+        "model": "mlflatpages.flatpagetranslation",
+        "fields": {
+            "master": 2,
+            "language_code": "cs",
+            "title": "Vnořená stránka",
+            "content": "Není plochá a hluboká!"
+        }
+    },
+
+
+    {
+        "pk": 101,
+        "model": "mlflatpages.flatpage",
+        "fields": {
+            "registration_required": true,
+            "url": "/sekrit/",
+            "template_name": "",
+            "sites": [
+                1
+            ],
+            "enable_comments": false
+        }
+    },
+    {
+        "pk": 101,
+        "model": "mlflatpages.flatpagetranslation",
+        "fields": {
+            "master": 101,
+            "language_code": "en",
+            "title": "Sekrit Flatpage",
+            "content": "Isn't it sekrit!"
+        }
+    },
+    {
+        "pk": 102,
+        "model": "mlflatpages.flatpagetranslation",
+        "fields": {
+            "master": 101,
+            "language_code": "cs",
+            "title": "Tajná stránka",
+            "content": "Není tajná!"
+        }
+    },
+
+    {
+        "pk": 102,
+        "model": "mlflatpages.flatpage",
+        "fields": {
+            "registration_required": true,
+            "url": "/location/sekrit/",
+            "template_name": "",
+            "sites": [
+                1
+            ],
+            "enable_comments": false
+        }
+    },
+    {
+        "pk": 103,
+        "model": "mlflatpages.flatpagetranslation",
+        "fields": {
+            "master": 102,
+            "language_code": "en",
+            "title": "Sekrit Nested Flatpage",
+            "content": "Isn't it sekrit and deep!"
+        }
+    },
+    {
+        "pk": 104,
+        "model": "mlflatpages.flatpagetranslation",
+        "fields": {
+            "master": 102,
+            "language_code": "cs",
+            "title": "Tajná vnořená stránka",
+            "content": "Není tajná a hluboká!"
+        }
+    }
+]
