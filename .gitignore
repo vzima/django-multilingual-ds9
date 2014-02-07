@@ -1,7 +1,3 @@
 *.pyc
-.project
-.pydevproject
-.settings/
 build/
 django_multilingual_ds9.egg-info/
-

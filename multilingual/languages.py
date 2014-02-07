@@ -135,29 +135,3 @@ def get_field_alias(field_name, language_code):
     Creates database alias for column and language
     """
     return '_trans_%s_%s' % (field_name, _db_prep_language_code(language_code))
-
-
-### DEPRECATED ###
-import warnings
-from django.utils.translation import activate
-
-def set_default_language(language_code):
-    warnings.warn("Function 'set_default_language' is deprecated, use 'django.utils.translation.activate' instead. "
-        "Use locks if you want to set different language for multilingual.",
-        DeprecationWarning)
-    return activate(language_code)
-
-def get_default_language():
-    warnings.warn("Function 'get_default_language' is deprecated, use 'django.utils.translation.get_language' instead. "
-        "Use locks if you want to set different language for multilingual.",
-        DeprecationWarning)
-    return get_language()
-
-def get_language_name(language_code):
-    return dict(settings.LANGUAGES)[language_code]
-
-def get_language_bidi(language_code):
-    return language_code in settings.LANGUAGES_BIDI
-
-def get_language_idx(language_code):
-    return get_all().index(language_code)

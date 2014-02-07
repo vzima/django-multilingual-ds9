@@ -2,15 +2,9 @@
 """
 This tests standard behaviour of multilingual models
 """
-from mock import Mock
-
-from django.contrib.admin import site
-from django.contrib.auth.models import User
-from django.test.client import RequestFactory
 from django.utils import unittest
 
-from multilingual.admin import MultilingualModelAdmin
-from multilingual.forms.forms import MultilingualModelForm
+from multilingual import MultilingualModelForm
 
 from .base import MultilingualTestCase
 from .ml_test_app.models import Multiling
