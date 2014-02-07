@@ -2,71 +2,59 @@
 """
 This tests multilingual forms
 """
-from django import forms
 from django.utils import unittest
-
-from multilingual.forms.forms import MultilingualModelForm
+from django.utils.translation import activate, deactivate_all
 
 from .base import MultilingualTestCase
-from .ml_test_app.models import Multiling
-
-
-class MinimalMultilingForm(MultilingualModelForm):
-    class Meta:
-        model = Multiling
-
-
-class FieldsMultilingForm(MultilingualModelForm):
-    class Meta:
-        model = Multiling
-        fields = ('name', 'title')
-
-
-class ExcludeMultilingForm(MultilingualModelForm):
-    class Meta:
-        model = Multiling
-        exclude = ('title', )
-
-
-class CustomMultilingForm(MultilingualModelForm):
-    custom = forms.IntegerField()
-
-    class Meta:
-        model = Multiling
 
 
 class TestModelForm(MultilingualTestCase):
-    def test_form_fields(self):
-        self.assertEqual(MinimalMultilingForm.base_fields.keys(), ['name', 'title'])
-        self.assertEqual(FieldsMultilingForm.base_fields.keys(), ['name', 'title'])
-        self.assertEqual(ExcludeMultilingForm.base_fields.keys(), ['name'])
-        self.assertEqual(CustomMultilingForm.base_fields.keys(), ['name', 'custom', 'title'])
+    def setUp(self):
+        activate('cs')
+
+    def tearDown(self):
+        deactivate_all()
+
+    def test_modelforms(self):
+        # Test various definitions of model forms
+        from .ml_test_app.forms import SimpleForm, FieldsForm, ExcludeForm, CustomForm
+
+        self.assertEqual(SimpleForm.base_fields.keys(), ['name', 'title'])
+        self.assertEqual(FieldsForm.base_fields.keys(), ['name', 'title'])
+        self.assertEqual(ExcludeForm.base_fields.keys(), ['name'])
+        self.assertEqual(CustomForm.base_fields.keys(), ['name', 'custom', 'title'])
 
     def test_form_unbound(self):
-        form = MinimalMultilingForm()
+        from .ml_test_app.forms import SimpleForm
+        from .ml_test_app.models import Multiling
+
+        form = SimpleForm()
         self.assertFalse(form.is_bound)
         self.assertEqual(form.initial, {})
 
         obj = Multiling.objects.get(name='first')
-        form = MinimalMultilingForm(instance=obj)
+        form = SimpleForm(instance=obj)
         self.assertFalse(form.is_bound)
         self.assertEqual(form.initial, {'id': 1, 'name': 'first', 'title': u'obsah ěščřžýáíé'})
 
         obj = Multiling.objects.get(name='untranslated')
-        form = MinimalMultilingForm(instance=obj)
+        form = SimpleForm(instance=obj)
         self.assertFalse(form.is_bound)
         self.assertEqual(form.initial, {'id': 4, 'name': 'untranslated', 'title': ''})
 
     def test_form_bound(self):
+        from .ml_test_app.forms import SimpleForm, ExcludeForm
+        from .ml_test_app.models import Multiling
+
         data = {'name': 'new', 'title': 'Titulek'}
-        form = MinimalMultilingForm(data)
+        form = SimpleForm(data)
         self.assertTrue(form.is_bound)
         self.assertTrue(form.is_valid())
         self.assertEqual(form.instance.name, 'new')
         self.assertEqual(form.instance.title, 'Titulek')
 
         data = {'name': 'new'}
-        form = ExcludeMultilingForm(data)
+        form = ExcludeForm(data)
         self.assertTrue(form.is_bound)
         self.assertTrue(form.is_valid())
         self.assertEqual(form.instance.name, 'new')
