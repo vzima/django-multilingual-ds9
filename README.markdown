@@ -2,12 +2,68 @@
 
 Django-multilingual-DS9 is a branch of django-multilingual, forked from django-multilingual-ng, with restructured core.
 
-Compatibility:
-* Django 1.3
-* Django 1.4
+### Requirements: ###
+* Django 1.4 or 1.5
 
 Django-multilingual-ds9 does not have to be fully compatible with django-multilingual-ng, but basic features should not
 differ.
+
+### Usage ###
+Define models
+
+    from django.db import models
+
+    from multilingual import MultilingualModel
+
+    class MyModel(MultilingualModel):
+        # Fields without language versions
+        data_field = models.IntegerField()
+
+        class Translation:
+            # Fields with language versions
+            name = models.CharField(max_length=100)
+
+Add to administration
+
+    from django.contrib.admin import site
+    from multilingual import MultilingualModelAdmin
+
+    from myapp.models import MyModel
+
+    site.register(MyModel, MultilingualModelAdmin)
+
+Use in views and templates
+
+    e = MyModel.objects.create()
+    # get translation for current language
+    e.name
+    # get translation with fallback
+    e.name_any
+
+    # returns all translation objects
+    e.translations.all()
+
+    # Filter objects by translation field
+    qs = MyModel.objects.filter(name='some')
+    #!! This will return objects with no translation and objects with missing name translation
+    qs = MyModel.objects.filter(name__isnull=True)
+    #!! This also may contain several None objects if translations are missing
+    qs = MyModel.objects.values_list('name', flat=True)
+
+    # Get object with translation in one query
+    MyModel.objects.select_related('translations').get(pk=1)
+    # Get objects with missing translation
+    MyModel.objects.filter(translation__isnull=True)
+
+    # Change current language
+    from django.utils.translation import activate
+    activate('cs')
+
+    # Force usage of specific language in multilingual code
+    from multilingual import language
+    language.lock('cs')
+    language.release()
+
 
 ### Features ###
 * Use only language codes from `LANGUAGES` setting.
@@ -38,51 +94,3 @@ differ.
 * Django admin validation is rigid and does not handle customized models, especially virtual fields which are used here.
 Thus it the supported solution is to write your own form for ModelAdmins if you want to do some changes and not to use
 ModelAdmin attributes for form customizing.
-
-
-### Examples ###
-You may see tests for more specific usage
-
-    from django import models
-    from multilingual import MultilingualModel
-
-    class Example(MultilingualModel):
-        some_field = models.IntegerField()
-
-        class Translation:
-            trans_field = models.CharField(max_length=20)
-
-    e = Example.objects.create()
-    # get translation for current language
-    e.trans_field
-    # get translation with fallback
-    e.trans_field_any
-
-    # returns all translation objects
-    e.translations.all()
-
-    # Filter objects by translation field
-    qs = Example.objects.filter(trans_field='some')
-    #!! This will return objects with no translation and objects with missing trans_field translation
-    qs = Example.objects.filter(trans_field__isnull=True)
-    #!! This also may contain several None objects if translations are missing
-    qs = Example.objects.values_list('trans_field', flat=True)
-
-    # Get object with translation in one query
-    Example.objects.select_related('translations').get(pk=1)
-    # Get objects with missing translation
-    Example.objects.filter(translation__isnull=True)
-
-    # Change current language
-    from django.utils.translation import activate
-    activate('cs')
-
-    # Force usage of specific language in multilingual code
-    from multilingual import language
-    language.lock('cs')
-    language.release()
-
-### Tests ###
-To test multilingual just run
-
-    python manage.py test multilingual
