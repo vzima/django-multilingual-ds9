@@ -1,7 +1,7 @@
 """
 Model form for multilingual models
 """
-from django.forms.models import construct_instance, model_to_dict, fields_for_model, ModelFormMetaclass, ModelForm
+from django.forms.models import model_to_dict, fields_for_model, ModelFormMetaclass, ModelForm, ALL_FIELDS
 from django.forms.util import ErrorList
 
 from multilingual.languages import get_active
@@ -29,8 +29,14 @@ class MultilingualModelFormMetaclass(ModelFormMetaclass):
                     fields = getattr(meta, 'fields', None)
                     widgets = getattr(meta, 'widgets', None)
                     formfield_callback = attrs.get('formfield_callback', None)
-                    fields = fields_for_model(translation_model, fields, exclude, widgets, formfield_callback)
-                    for field_name, field in fields.items():
+
+                    if fields == ALL_FIELDS:
+                        # sentinel for fields_for_model to indicate "get the list of
+                        # fields from the model"
+                        fields = None
+
+                    model_fields = fields_for_model(translation_model, fields, exclude, widgets, formfield_callback)
+                    for field_name, field in model_fields.items():
                         # Exclude untranslated fields
                         if field is not None:
                             attrs.setdefault(field_name, field)
@@ -47,36 +53,44 @@ class MultilingualModelForm(ModelForm):
     def __init__(self, data=None, files=None, auto_id='id_%s', prefix=None,
                  initial=None, error_class=ErrorList, label_suffix=':',
                  empty_permitted=False, instance=None):
+        super(MultilingualModelForm, self).__init__(data, files, auto_id, prefix, initial, error_class, label_suffix,
+                                                    empty_permitted, instance)
+
+        # Nothing to do if the instance was not provided
+        if not instance:
+            return
+
+        # Create empty translation if not exists
+        if not hasattr(self.instance, 'translation') or self.instance.translation is None:
+            self.instance.translation = self.instance._meta.translation_model(master=self.instance,
+                                                                              language_code=get_active())
+
         opts = self._meta
-        initial_data = {}
-        if instance is not None:
-            trans_model = getattr(instance._meta, 'translation_model', None)
-            if trans_model is not None:
-                try:
-                    translation = instance._get_translation(get_active(), can_create=True)
-                except trans_model.DoesNotExist:
-                    pass
-                else:
-                    if opts.exclude is None:
-                        exclude = ('id', 'language_code', 'master')
-                    else:
-                        exclude = list(opts.exclude) + ['id', 'language_code', 'master']
-                    initial_data = model_to_dict(translation, opts.fields, exclude)
-        initial_data.update(initial or {})
-        super(MultilingualModelForm, self).__init__(
-            data, files, auto_id, prefix, initial_data, error_class, label_suffix, empty_permitted, instance
-        )
+        exclude = ['id', 'language_code', 'master']
+        if opts.exclude is not None:
+            exclude.extend(opts.exclude)
+        object_data = model_to_dict(self.instance.translation, opts.fields, exclude)
+        for key, value in object_data.iteritems():
+            self.initial.setdefault(key, value)
 
     def _post_clean(self):
         """
         Stores translation data into translation instance
         """
-        opts = self._meta
-        translation = self.instance._get_translation(get_active(), can_create=True)
-        if opts.exclude is None:
-            exclude = ('id', 'language_code', 'master')
-        else:
-            exclude = list(opts.exclude) + ['id', 'language_code', 'master']
-        # Update instance translation
-        construct_instance(self, translation, opts.fields, exclude)
+        # Update master instance
         super(MultilingualModelForm, self)._post_clean()
+
+        # Update translations
+        instance = self.instance
+        fields = self._meta.fields
+        exclude = self._meta.exclude
+
+        # Most effective is to do something like `construct_instance` for virtual fields.
+        for f in self.instance._meta.virtual_fields:
+            if not f.name in self.cleaned_data:
+                continue
+            if fields is not None and f.name not in fields:
+                continue
+            if exclude and f.name in exclude:
+                continue
+            setattr(instance, f.name, self.cleaned_data[f.name])

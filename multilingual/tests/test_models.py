@@ -20,7 +20,7 @@ from .base import MultilingualSetupMixin, TEST_LANGUAGES
 @override_settings(LANGUAGE_CODE='cs', LANGUAGES=TEST_LANGUAGES)
 class TestModel(TestCase):
     """
-    Test model without database.
+    Test models without database.
     """
     def setUp(self):
         deactivate_all()
@@ -36,21 +36,27 @@ class TestModel(TestCase):
 
     def test_model_class(self):
         from .ml_test_app.models import Article
+        opts = Article._meta
 
         self.assertTrue(issubclass(Article, MultilingualModel))
-        translation = Article._meta.translation_model
-
-        self.assertTrue(issubclass(translation, TranslationModel))
-        self.assertEqual(translation.__name__, 'ArticleTranslation')
-
-        self.assertTrue(hasattr(Article, 'translations'))
-        self.assertTrue(hasattr(Article, 'title'))
-        self.assertTrue(hasattr(Article, 'title_cs'))
-        self.assertTrue(hasattr(Article, 'title_en'))
-        self.assertTrue(hasattr(Article, 'title_en_us'))
-        self.assertTrue(hasattr(Article, 'title_fr'))
-        self.assertTrue(hasattr(Article, 'title_any'))
         self.assertIsInstance(Article.objects, MultilingualManager)
+        self.assertTrue(issubclass(opts.translation_model, TranslationModel))
+        self.assertEqual(opts.translation_model.__name__, 'ArticleTranslation')
+
+        self.assertTrue(opts.get_field_by_name('translations'))
+        self.assertTrue(opts.get_field('translation'))
+        self.assertTrue(opts.get_field('translation_cs'))
+        self.assertTrue(opts.get_field('translation_en'))
+        self.assertTrue(opts.get_field('translation_en_us'))
+        self.assertTrue(opts.get_field('translation_fr'))
+        self.assertTrue(opts.get_virtual_field('title'))
+        self.assertTrue(opts.get_virtual_field('title_cs'))
+        self.assertTrue(opts.get_virtual_field('title_en'))
+        self.assertTrue(opts.get_virtual_field('title_en_us'))
+        self.assertTrue(opts.get_virtual_field('title_fr'))
+        self.assertTrue(opts.get_virtual_field('title_any'))
+
+        self.assertTrue(opts.translation_model._meta.get_field('master'))
 
     def test_invalid_manager(self):
         # Test error when creating model with invalid manager
@@ -159,7 +165,7 @@ class TestModel(TestCase):
         self.assertEqual(obj.title, 'Titre')
 
 
-class TestModelQueries(MultilingualSetupMixin, TestCase):
+class TestQueries(MultilingualSetupMixin, TestCase):
     """
     Test model queries (save and load).
     """
@@ -196,30 +202,31 @@ class TestModelQueries(MultilingualSetupMixin, TestCase):
         self.assertEqual(obj.title, 'Titulek')
         self.assertEqual(obj.title_en, 'Title')
 
+    def test_save_new_translation(self):
+        # Test saving new translation
+        from .ml_test_app.models import Article
+
+        obj = Article.objects.get(slug='only-czech')
+
+        obj.title_en = 'Missing'
+        obj.save()
+
+        obj = Article.objects.get(slug='only-czech')
+        self.assertEqual(obj.title_en, 'Missing')
+
     def test_delete(self):
         from .ml_test_app.models import Article
         translation_model = Article._meta.translation_model
-        obj = Article.objects.create(slug='to_be_deleted', title_cs=u'na smazání', title_en='for deletion')
-        obj.save()
 
+        obj = Article.objects.get(pk=1)
         obj.delete()
 
-        self.assertFalse(Article.objects.filter(pk=obj.pk).exists())
-        self.assertFalse(translation_model.objects.filter(master=obj).exists())
+        self.assertFalse(Article.objects.filter(pk=1).exists())
+        self.assertFalse(translation_model.objects.filter(master__pk=1).exists())
 
-
-class TestManager(MultilingualSetupMixin, TestCase):
-    """
-    Test multilingual managers.
-    """
-    fixtures = ('ml_test_models.json', )
-
-    def setUp(self):
-        deactivate_all()
-
-    def test_get_query_set(self):
+    def test_get_queryset(self):
         from .ml_test_app.models import Article
-        queryset = Article.objects.get_query_set()
+        queryset = Article.objects.get_queryset()
         self.assertIsInstance(queryset, MultilingualQuerySet)
         self.assertEqual(queryset.model, Article)
 
@@ -232,12 +239,9 @@ class TestManager(MultilingualSetupMixin, TestCase):
 
         # Test get
         obj = Article.objects.get(pk=1)
-        self.assertIsInstance(obj, Article)
-        self.assertEqual(obj.pk, 1)
         self.assertEqual(obj.slug, 'first')
 
         obj = Article.objects.get(slug='first')
-        self.assertIsInstance(obj, Article)
         self.assertEqual(obj.pk, 1)
 
         # Test all
@@ -246,6 +250,7 @@ class TestManager(MultilingualSetupMixin, TestCase):
 
         # Test filters
         self.assertQuerysetEqual(Article.objects.filter(pk=1), ['<Article: first>'])
+        self.assertQuerysetEqual(Article.objects.filter(slug='untranslated'), ['<Article: untranslated>'])
 
         self.assertQuerysetEqual(Article.objects.exclude(slug='first'),
                                  ['<Article: only-czech>', '<Article: only-english>', '<Article: untranslated>'],
@@ -253,7 +258,7 @@ class TestManager(MultilingualSetupMixin, TestCase):
 
         # Test ordering
         result = ['<Article: untranslated>', '<Article: only-english>', '<Article: only-czech>', '<Article: first>']
-        self.assertQuerysetEqual(Article.objects.all().order_by('-pk'), result)
+        self.assertQuerysetEqual(Article.objects.order_by('-pk'), result)
 
         # Test lookups
         self.assertQuerysetEqual(Article.objects.filter(slug__startswith='only'),
@@ -262,33 +267,58 @@ class TestManager(MultilingualSetupMixin, TestCase):
     def test_filter(self):
         from .ml_test_app.models import Article
 
+        self.assertQuerysetEqual(Article.objects.filter(title=u'První článek'), ['<Article: first>'])
+        self.assertQuerysetEqual(Article.objects.filter(translation__title=u'První článek'), ['<Article: first>'])
+
         self.assertQuerysetEqual(Article.objects.filter(title_cs=u'První článek'), ['<Article: first>'])
+        self.assertQuerysetEqual(Article.objects.filter(translation_cs__title=u'První článek'), ['<Article: first>'])
 
+        self.assertQuerysetEqual(Article.objects.filter(title_en='English article'), ['<Article: only-english>'])
+        self.assertQuerysetEqual(Article.objects.filter(translation_en__title='English article'),
+                                 ['<Article: only-english>'])
+
+        # Behavior changed in Django 1.6. When excluding through LEFT JOIN, the condition 'OR IS NULL' is added,
+        # So empty lines are returned as well.
         # Excluding title returns also articles with no translation
-        self.assertQuerysetEqual(Article.objects.exclude(title_cs=u'První článek'),
-                                 ['<Article: only-czech>'],
-                                 ordered=False)
+        result = ['<Article: only-czech>', '<Article: only-english>', '<Article: untranslated>']
+        self.assertQuerysetEqual(Article.objects.exclude(title_cs=u'První článek'), result, ordered=False)
+        self.assertQuerysetEqual(Article.objects.exclude(translation_cs__title=u'První článek'), result, ordered=False)
 
-    def test_order_by(self):
-        # Watch out: ordering is dependent on database locales
-        # So if you apply ordering rules on set of words from different language it will be
-        # ordered differently than it should. That also may cause problems if application is run
-        # with different locales than database.
-        from .ml_test_app.models import Article
+        # Lookups for 'IS NULL'
+        result = ['<Article: only-english>', '<Article: untranslated>']
+        self.assertQuerysetEqual(Article.objects.filter(translation__isnull=True), result, ordered=False)
+        self.assertQuerysetEqual(Article.objects.filter(translation_cs__isnull=True), result, ordered=False)
 
-        self.assertQuerysetEqual(Article.objects.filter(title_cs__isnull=False).order_by('title_cs'),
-                                 ['<Article: first>', '<Article: only-czech>'])
+        result = ['<Article: only-czech>', '<Article: untranslated>']
+        self.assertQuerysetEqual(Article.objects.filter(translation_en__isnull=True), result, ordered=False)
 
-    def test_complex_lookups(self):
-        from .ml_test_app.models import Article
-
-        self.assertQuerysetEqual(Article.objects.filter(title_en__isnull=True),
-                                 ['<Article: only-czech>', '<Article: untranslated>'],
-                                 ordered=False)
+        self.assertQuerysetEqual(Article.objects.filter(translations__isnull=True), ['<Article: untranslated>'])
 
     def test_select_related(self):
         from .ml_test_app.models import Article
 
+        with self.assertNumQueries(1):
+            obj = Article.objects.select_related('translation').get(slug='first')
+            self.assertEqual(obj.title, u'První článek')
+            self.assertEqual(obj.title_cs, u'První článek')
+
+        with self.assertNumQueries(1):
+            obj = Article.objects.select_related('translation_cs').get(slug='first')
+            self.assertEqual(obj.title, u'První článek')
+            self.assertEqual(obj.title_cs, u'První článek')
+
+        with self.assertNumQueries(1):
+            obj = Article.objects.select_related('translation_en').get(slug='first')
+            self.assertEqual(obj.title_en, 'First article')
+
+        # Ensure select related doesn't require the existence of related object
+        with self.assertNumQueries(1):
+            Article.objects.select_related('translation').get(slug='only-english')
+
+        with self.assertNumQueries(1):
+            Article.objects.select_related('translation_cs').get(slug='only-english')
+
+        # Deprecated select_related arguments
         with self.assertNumQueries(1):
             obj = Article.objects.select_related('translations').get(slug='first')
             self.assertEqual(obj.title, u'První článek')
@@ -313,14 +343,38 @@ class TestManager(MultilingualSetupMixin, TestCase):
     def test_values(self):
         from .ml_test_app.models import Article
 
-        self.assertQuerysetEqual(Article.objects.filter(slug='first').values('title'),
-                                 [repr({'title': u'První článek'})])
+        result = ["{'title': u'Prvn\\xed \\u010dl\\xe1nek'}",
+                  "{'title': u'\\u010cesk\\xfd \\u010dl\\xe1nek'}",
+                  "{'title': None}", "{'title': None}"]
+        self.assertQuerysetEqual(Article.objects.values('title'), result, ordered=False)
+        result = ["{'title_cs': u'Prvn\\xed \\u010dl\\xe1nek'}",
+                  "{'title_cs': u'\\u010cesk\\xfd \\u010dl\\xe1nek'}",
+                  "{'title_cs': None}", "{'title_cs': None}"]
+        self.assertQuerysetEqual(Article.objects.values('title_cs'), result, ordered=False)
+        result = ["{'translation__title': u'Prvn\\xed \\u010dl\\xe1nek'}",
+                  "{'translation__title': u'\\u010cesk\\xfd \\u010dl\\xe1nek'}",
+                  "{'translation__title': None}", "{'translation__title': None}"]
+        self.assertQuerysetEqual(Article.objects.values('translation__title'), result, ordered=False)
+        result = ["{'translation_cs__title': u'Prvn\\xed \\u010dl\\xe1nek'}",
+                  "{'translation_cs__title': u'\\u010cesk\\xfd \\u010dl\\xe1nek'}",
+                  "{'translation_cs__title': None}", "{'translation_cs__title': None}"]
+        self.assertQuerysetEqual(Article.objects.values('translation_cs__title'), result, ordered=False)
 
-        self.assertQuerysetEqual(Article.objects.filter(slug='first').values_list('title'),
-                                 [repr((u'První článek', ))])
+        result = ["(u'Prvn\\xed \\u010dl\\xe1nek',)",
+                  "(u'\\u010cesk\\xfd \\u010dl\\xe1nek',)",
+                  "(None,)", "(None,)"]
+        self.assertQuerysetEqual(Article.objects.values_list('title'), result, ordered=False)
+        self.assertQuerysetEqual(Article.objects.values_list('translation__title'), result, ordered=False)
+        self.assertQuerysetEqual(Article.objects.values_list('title_cs'), result, ordered=False)
+        self.assertQuerysetEqual(Article.objects.values_list('translation_cs__title'), result, ordered=False)
 
-        self.assertQuerysetEqual(Article.objects.filter(slug='first').values_list('title', flat=True),
-                                 [repr(u'První článek')])
+        result = ["u'Prvn\\xed \\u010dl\\xe1nek'",
+                  "u'\\u010cesk\\xfd \\u010dl\\xe1nek'",
+                  "None", "None"]
+        self.assertQuerysetEqual(Article.objects.values_list('title', flat=True), result, ordered=False)
+        self.assertQuerysetEqual(Article.objects.values_list('translation__title', flat=True), result, ordered=False)
+        self.assertQuerysetEqual(Article.objects.values_list('title_cs', flat=True), result, ordered=False)
+        self.assertQuerysetEqual(Article.objects.values_list('translation_cs__title', flat=True), result, ordered=False)
 
     def test_create(self):
         from .ml_test_app.models import Article
@@ -350,3 +404,47 @@ class TestManager(MultilingualSetupMixin, TestCase):
         self.assertEqual(obj.title_any, u'nový')
         self.assertEqual(obj.title_cs, u'nový')
         self.assertEqual(obj.title_en, u'new one')
+
+
+class TestQueries2(MultilingualSetupMixin, TestCase):
+    """
+    Test more complicated queries.
+    """
+    def setUp(self):
+        deactivate_all()
+
+    def test_order_by(self):
+        from .ml_test_app.models import Article
+
+        Article.objects.create(slug='one', title='Article 1')
+        Article.objects.create(slug='two', title='Article 2')
+        Article.objects.create(slug='three', title='Article 3')
+        Article.objects.create(slug='four', title='Article 4')
+
+        result = ['<Article: one>', '<Article: two>', '<Article: three>', '<Article: four>']
+        self.assertQuerysetEqual(Article.objects.order_by('title'), result)
+        self.assertQuerysetEqual(Article.objects.order_by('translation__title'), result)
+        self.assertQuerysetEqual(Article.objects.order_by('title_cs'), result)
+        self.assertQuerysetEqual(Article.objects.order_by('translation_cs__title'), result)
+
+        result = ['<Article: four>', '<Article: three>', '<Article: two>', '<Article: one>']
+        self.assertQuerysetEqual(Article.objects.order_by('-title'), result)
+        self.assertQuerysetEqual(Article.objects.order_by('-translation__title'), result)
+        self.assertQuerysetEqual(Article.objects.order_by('-title_cs'), result)
+        self.assertQuerysetEqual(Article.objects.order_by('-translation_cs__title'), result)
+
+    def test_isnull_lookups(self):
+        from .ml_test_app.models import Article
+
+        Article.objects.create(slug='empty')
+        Article.objects.create(slug='no-content', title='No content', content=None)
+        Article.objects.create(slug='full', title='Full content', content='A content')
+
+        # Due to LEFT OUTER JOIN `field__isnull` doesn't differentiate between missing translation and 'None'
+        # in translation field. On the other hand this is consistent with behaviour of `field` proxy in model.
+        result = ['<Article: empty>', '<Article: no-content>']
+        self.assertQuerysetEqual(Article.objects.filter(content__isnull=True), result, ordered=False)
+        self.assertQuerysetEqual(Article.objects.filter(translation__content__isnull=True), result, ordered=False)
+
+        self.assertQuerysetEqual(Article.objects.filter(content_cs__isnull=True), result, ordered=False)
+        self.assertQuerysetEqual(Article.objects.filter(translation_cs__content__isnull=True), result, ordered=False)

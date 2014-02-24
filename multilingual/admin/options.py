@@ -24,15 +24,14 @@ class MultilingualModelAdmin(ModelAdmin):
     #TODO: select_related on get_object if required
 
     def render_change_form(self, request, context, **kwargs):
-        # Django 1.4 postponed template rendering, so we have to pass updated language in context and avoid context
-        # processor.
+        # Since Django 1.4 template rendering is lazy, so we need to add language to context.
         # TODO: Make this a hidden form field.
-        context['ML_ADMIN_LANGUAGE'] = get_active()
+        context['ml_admin_language'] = get_active()
         return super(MultilingualModelAdmin, self).render_change_form(request, context, **kwargs)
 
     def add_view(self, request, form_url='', extra_context=None):
         """
-        Lock language over add_view and add extra_context
+        Lock language over 'add' view and update context.
         """
         try:
             lock(request.POST.get('ml_admin_language', request.GET.get('ml_admin_language', get_active())))
@@ -52,7 +51,7 @@ class MultilingualModelAdmin(ModelAdmin):
 
     def change_view(self, request, object_id, form_url='', extra_context=None):
         """
-        Lock language over change_view and add extra_context
+        Lock language over 'change' view and update context.
         """
         try:
             lock(request.POST.get('ml_admin_language', request.GET.get('ml_admin_language', get_active())))

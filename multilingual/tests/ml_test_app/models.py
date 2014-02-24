@@ -10,7 +10,7 @@ class Article(MultilingualModel):
 
     class Translation:
         title = models.CharField(max_length=100)
-        content = models.TextField()
+        content = models.TextField(blank=True, null=True)
 
     def __unicode__(self):
         return self.slug
