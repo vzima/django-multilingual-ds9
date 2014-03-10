@@ -8,6 +8,9 @@ from django.core.exceptions import ImproperlyConfigured
 from django.utils.datastructures import SortedDict
 from django.utils.translation import get_language
 
+from .utils import sanitize_language_code
+
+
 FALLBACK_FIELD_SUFFIX = 'any'
 
 #TODO: enable locks included in each other
@@ -116,22 +119,15 @@ def get_fallbacks(language_code):
     return fallbacks
 
 
-def _db_prep_language_code(language_code):
-    """
-    Updates language so it can be used as part of table name in database
-    """
-    return language_code.replace('-', '_')
-
-
 def get_table_alias(table_name, language_code):
     """
     Creates database alias for table and language
     """
-    return '%s_%s' % (table_name, _db_prep_language_code(language_code))
+    return '%s_%s' % (table_name, sanitize_language_code(language_code))
 
 
 def get_field_alias(field_name, language_code):
     """
     Creates database alias for column and language
     """
-    return '_trans_%s_%s' % (field_name, _db_prep_language_code(language_code))
+    return '_trans_%s_%s' % (field_name, sanitize_language_code(language_code))

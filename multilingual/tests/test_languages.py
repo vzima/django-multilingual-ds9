@@ -79,11 +79,6 @@ class TestLanguages(TestCase):
         self.assertFalse(languages.is_locked())
         self.assertEqual(languages.get_active(), 'en')
 
-    def test_db_prep_language_code(self):
-        self.assertEqual(languages._db_prep_language_code('cs'), 'cs')
-        self.assertEqual(languages._db_prep_language_code('en'), 'en')
-        self.assertEqual(languages._db_prep_language_code('en-us'), 'en_us')
-
     def test_get_table_alias(self):
         self.assertEqual(languages.get_table_alias('table_name', 'cs'), 'table_name_cs')
         self.assertEqual(languages.get_table_alias('table_name', 'en'), 'table_name_en')
