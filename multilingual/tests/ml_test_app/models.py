@@ -5,8 +5,12 @@ from django.db import models
 from multilingual.db.models.base import MultilingualModel
 
 
-class Multiling(MultilingualModel):
-    name = models.CharField(max_length=100)
+class Article(MultilingualModel):
+    slug = models.SlugField()
 
     class Translation:
         title = models.CharField(max_length=100)
+        content = models.TextField()
+
+    def __unicode__(self):
+        return self.slug

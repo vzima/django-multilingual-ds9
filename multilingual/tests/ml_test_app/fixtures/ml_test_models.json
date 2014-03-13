@@ -1,69 +1,73 @@
 [
     {
         "pk": 1,
-        "model": "ml_test_app.multiling",
+        "model": "ml_test_app.article",
         "fields": {
-            "name": "first"
+            "slug": "first"
         }
     },
     {
         "pk": 1,
-        "model": "ml_test_app.multilingtranslation",
+        "model": "ml_test_app.articletranslation",
         "fields": {
             "master": 1,
             "language_code": "cs",
-            "title": "obsah ěščřžýáíé"
+            "title": "První článek",
+            "content": "Žluťoučký kůň"
         }
     },
     {
         "pk": 2,
-        "model": "ml_test_app.multilingtranslation",
+        "model": "ml_test_app.articletranslation",
         "fields": {
             "master": 1,
             "language_code": "en",
-            "title": "content"
+            "title": "First article",
+            "content": "Yellow horse"
         }
     },
 
     {
         "pk": 2,
-        "model": "ml_test_app.multiling",
+        "model": "ml_test_app.article",
         "fields": {
-            "name": "only czech"
+            "slug": "only-czech"
         }
     },
     {
         "pk": 3,
-        "model": "ml_test_app.multilingtranslation",
+        "model": "ml_test_app.articletranslation",
         "fields": {
             "master": 2,
             "language_code": "cs",
-            "title": "pouze čeština"
+            "title": "Český článek",
+            "content": "Dobrý voják Švejk"
         }
     },
 
     {
         "pk": 3,
-        "model": "ml_test_app.multiling",
+        "model": "ml_test_app.article",
         "fields": {
-            "name": "only english"
+            "slug": "only-english"
         }
     },
     {
         "pk": 4,
-        "model": "ml_test_app.multilingtranslation",
+        "model": "ml_test_app.articletranslation",
         "fields": {
             "master": 3,
             "language_code": "en",
-            "title": "only english"
+            "title": "English article",
+            "content": "The Comedy of Errors"
         }
     },
 
     {
         "pk": 4,
-        "model": "ml_test_app.multiling",
+        "model": "ml_test_app.article",
         "fields": {
-            "name": "untranslated"
+            "slug": "untranslated"
         }
     }
 ]

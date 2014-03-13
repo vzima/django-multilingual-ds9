@@ -3,11 +3,11 @@ from django.contrib.admin.sites import AdminSite
 
 from multilingual.admin import MultilingualModelAdmin
 
-from .models import Multiling
+from .models import Article
 
 SITE = AdminSite()
 
-SITE.register(Multiling, MultilingualModelAdmin)
+SITE.register(Article, MultilingualModelAdmin)
 
 urlpatterns = patterns('',
     url(r'^admin/', include(SITE.urls)),

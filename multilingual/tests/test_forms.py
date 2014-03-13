@@ -2,13 +2,15 @@
 """
 This tests multilingual forms
 """
-from django.utils import unittest
+from django.test import TestCase
 from django.utils.translation import activate, deactivate_all
 
-from .base import MultilingualTestCase
+from .base import MultilingualSetupMixin
 
 
-class TestModelForm(MultilingualTestCase):
+class TestModelForm(MultilingualSetupMixin, TestCase):
+    fixtures = ('ml_test_models.json', )
+
     def setUp(self):
         activate('cs')
 
@@ -19,48 +21,43 @@ class TestModelForm(MultilingualTestCase):
         # Test various definitions of model forms
         from .ml_test_app.forms import SimpleForm, FieldsForm, ExcludeForm, CustomForm
 
-        self.assertEqual(SimpleForm.base_fields.keys(), ['name', 'title'])
-        self.assertEqual(FieldsForm.base_fields.keys(), ['name', 'title'])
-        self.assertEqual(ExcludeForm.base_fields.keys(), ['name'])
-        self.assertEqual(CustomForm.base_fields.keys(), ['name', 'custom', 'title'])
+        self.assertEqual(SimpleForm.base_fields.keys(), ['slug', 'title', 'content'])
+        self.assertEqual(FieldsForm.base_fields.keys(), ['slug', 'title'])
+        self.assertEqual(ExcludeForm.base_fields.keys(), ['content'])
+        self.assertEqual(CustomForm.base_fields.keys(), ['slug', 'custom', 'title', 'content'])
 
     def test_form_unbound(self):
         from .ml_test_app.forms import SimpleForm
-        from .ml_test_app.models import Multiling
+        from .ml_test_app.models import Article
 
         form = SimpleForm()
         self.assertFalse(form.is_bound)
         self.assertEqual(form.initial, {})
 
-        obj = Multiling.objects.get(name='first')
+        obj = Article.objects.get(slug='first')
         form = SimpleForm(instance=obj)
         self.assertFalse(form.is_bound)
-        self.assertEqual(form.initial, {'id': 1, 'name': 'first', 'title': u'obsah ěščřžýáíé'})
+        self.assertEqual(form.initial,
+                         {'id': 1, 'slug': 'first', 'title': u'První článek', 'content': u'Žluťoučký kůň'})
 
-        obj = Multiling.objects.get(name='untranslated')
+        obj = Article.objects.get(slug='untranslated')
         form = SimpleForm(instance=obj)
         self.assertFalse(form.is_bound)
-        self.assertEqual(form.initial, {'id': 4, 'name': 'untranslated', 'title': ''})
+        self.assertEqual(form.initial, {'id': 4, 'slug': 'untranslated', 'title': '', 'content': ''})
 
     def test_form_bound(self):
         from .ml_test_app.forms import SimpleForm, ExcludeForm
-        from .ml_test_app.models import Multiling
+        from .ml_test_app.models import Article
 
-        data = {'name': 'new', 'title': 'Titulek'}
+        data = {'slug': 'new', 'title': 'Titulek', 'content': 'Obsah'}
         form = SimpleForm(data)
         self.assertTrue(form.is_bound)
-        self.assertTrue(form.is_valid())
-        self.assertEqual(form.instance.name, 'new')
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertEqual(form.instance.slug, 'new')
         self.assertEqual(form.instance.title, 'Titulek')
 
-        data = {'name': 'new'}
+        data = {'content': 'New content'}
         form = ExcludeForm(data)
         self.assertTrue(form.is_bound)
         self.assertTrue(form.is_valid())
-        self.assertEqual(form.instance.name, 'new')
-
-
-def suite():
-    test = unittest.TestSuite()
-    test.addTest(unittest.makeSuite(TestModelForm))
-    return test
+        self.assertEqual(form.instance.content, 'New content')

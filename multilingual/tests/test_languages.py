@@ -5,7 +5,6 @@ Test language setters, getters and fallbacks
 from django.core.exceptions import ImproperlyConfigured
 from django.test import TestCase
 from django.test.utils import override_settings
-from django.utils import unittest
 from django.utils.datastructures import SortedDict
 from django.utils.translation import activate, deactivate_all
 
@@ -88,9 +87,3 @@ class TestLanguages(TestCase):
         self.assertEqual(languages.get_field_alias('field_name', 'cs'), '_trans_field_name_cs')
         self.assertEqual(languages.get_field_alias('field_name', 'en'), '_trans_field_name_en')
         self.assertEqual(languages.get_field_alias('field_name', 'en-us'), '_trans_field_name_en_us')
-
-
-def suite():
-    test = unittest.TestSuite()
-    test.addTest(unittest.makeSuite(TestLanguages))
-    return test

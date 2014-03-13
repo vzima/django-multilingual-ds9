@@ -5,28 +5,28 @@ from django import forms
 
 from multilingual.forms.forms import MultilingualModelForm
 
-from .models import Multiling
+from .models import Article
 
 
 class SimpleForm(MultilingualModelForm):
     class Meta:
-        model = Multiling
+        model = Article
 
 
 class FieldsForm(MultilingualModelForm):
     class Meta:
-        model = Multiling
-        fields = ('name', 'title')
+        model = Article
+        fields = ('slug', 'title')
 
 
 class ExcludeForm(MultilingualModelForm):
     class Meta:
-        model = Multiling
-        exclude = ('title', )
+        model = Article
+        exclude = ('slug', 'title')
 
 
 class CustomForm(MultilingualModelForm):
     custom = forms.IntegerField()
 
     class Meta:
-        model = Multiling
+        model = Article

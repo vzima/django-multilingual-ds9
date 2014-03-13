@@ -5,7 +5,6 @@ import sys
 from django.conf import settings
 from django.core.management import call_command
 from django.db.models.loading import cache, load_app
-from django.test import TransactionTestCase
 from django.test.utils import override_settings
 
 
@@ -13,13 +12,12 @@ from django.test.utils import override_settings
 TEST_LANGUAGES = (('cs', u'Čeština'), ('en', u'English'), ('en-us', u'American'), ('fr', u'Français'))
 
 
-#TODO: Make these test faster, flush database before each test is time consuming.
-class MultilingualTestCase(TransactionTestCase):
+class MultilingualSetupMixin(object):
     """
-    Adds `ml_test_app` into installed applications. Defines language settings.
-    """
-    fixtures = ('ml_test_models.json', )
+    Sets up environment for testing multilingual application.
 
+    Defines languages settings so models are created with defined translation fields.
+    """
     @classmethod
     def setUpClass(cls):
         # Modify sys path

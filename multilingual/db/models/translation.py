@@ -108,3 +108,6 @@ class TranslationModel(models.Model):
     @classmethod
     def contribute_to_class(cls, main_cls, name):
         main_cls._meta.translation_model = cls
+
+    def __unicode__(self):
+        return u"'%s' translation for '%s'" % (self.language_code, self.master)
