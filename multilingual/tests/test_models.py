@@ -47,6 +47,7 @@ class TestModel(TestCase):
         self.assertTrue(hasattr(Article, 'title'))
         self.assertTrue(hasattr(Article, 'title_cs'))
         self.assertTrue(hasattr(Article, 'title_en'))
+        self.assertTrue(hasattr(Article, 'title_en_us'))
         self.assertTrue(hasattr(Article, 'title_fr'))
         self.assertTrue(hasattr(Article, 'title_any'))
         self.assertIsInstance(Article.objects, MultilingualManager)
@@ -67,12 +68,14 @@ class TestModel(TestCase):
         self.assertEqual(obj.title_any, 'Titulek')
         self.assertEqual(obj.title_cs, 'Titulek')
         self.assertIsNone(obj.title_en)
+        self.assertIsNone(obj.title_en_us)
         self.assertIsNone(obj.title_fr)
 
         obj.title_fr = 'Titre'
         self.assertEqual(obj.title, 'Titulek')
         self.assertEqual(obj.title_cs, 'Titulek')
         self.assertIsNone(obj.title_en)
+        self.assertIsNone(obj.title_en_us)
         self.assertEqual(obj.title_fr, 'Titre')
 
     def test_fields_active(self):
@@ -86,6 +89,7 @@ class TestModel(TestCase):
         self.assertEqual(obj.title_any, 'Titre')
         self.assertIsNone(obj.title_cs)
         self.assertIsNone(obj.title_en)
+        self.assertIsNone(obj.title_en_us)
         self.assertEqual(obj.title_fr, 'Titre')
 
     def test_fields_lock(self):
@@ -100,6 +104,7 @@ class TestModel(TestCase):
         self.assertEqual(obj.title_any, 'Title')
         self.assertIsNone(obj.title_cs)
         self.assertEqual(obj.title_en, 'Title')
+        self.assertIsNone(obj.title_en_us)
         self.assertIsNone(obj.title_fr)
 
     def test_fields_fallback(self):
@@ -129,11 +134,12 @@ class TestModel(TestCase):
     def test_init_kwargs(self):
         # Test instance initiation with translations in kwargs
         from .ml_test_app.models import Article
-        obj = Article(slug='name', title_cs='Titulek', title_en='Title', title_fr='Titre')
+        obj = Article(slug='name', title_cs='Titulek', title_en='Title', title_en_us='US Title', title_fr='Titre')
 
         self.assertEqual(obj.title, 'Titulek')
         self.assertEqual(obj.title_cs, 'Titulek')
         self.assertEqual(obj.title_en, 'Title')
+        self.assertEqual(obj.title_en_us, 'US Title')
         self.assertEqual(obj.title_fr, 'Titre')
 
     def test_language_switch(self):
@@ -171,6 +177,7 @@ class TestModelQueries(MultilingualSetupMixin, TestCase):
         self.assertEqual(obj.title_any, u'První článek')
         self.assertEqual(obj.title_cs, u'První článek')
         self.assertEqual(obj.title_en, u'First article')
+        self.assertIsNone(obj.title_en_us)
 
     def test_save_no_translation(self):
         from .ml_test_app.models import Article

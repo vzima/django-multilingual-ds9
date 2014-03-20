@@ -2,6 +2,8 @@
 Provides virtual field to access to translation from multilingual model instance.
 """
 from multilingual.languages import get_active, FALLBACK_FIELD_SUFFIX
+from multilingual.utils import sanitize_language_code
+
 try:
     from django.utils.log import logger
 except ImportError:
@@ -24,7 +26,7 @@ class TranslationProxyField(property):
         self._fallback = fallback
         names = [field_name]
         if language_code is not None:
-            names.append(language_code.replace('-', '_'))
+            names.append(sanitize_language_code(language_code))
         if fallback:
             names.append(FALLBACK_FIELD_SUFFIX)
         self.name = '_'.join(names)
