@@ -12,4 +12,4 @@ __version__ = '0.3.1'
 from .admin import MultilingualModelAdmin
 from .db.models.base import MultilingualModel
 from .db.models.manager import MultilingualManager
-from .forms.forms import MultilingualModelForm
+from .forms import MultilingualModelForm

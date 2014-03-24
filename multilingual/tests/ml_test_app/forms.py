@@ -3,7 +3,7 @@ Forms for testing
 """
 from django import forms
 
-from multilingual.forms.forms import MultilingualModelForm
+from multilingual.forms import MultilingualModelForm
 
 from .models import Article
 
