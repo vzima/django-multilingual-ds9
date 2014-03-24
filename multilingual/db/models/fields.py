@@ -1,13 +1,11 @@
 """
 Provides virtual field to access to translation from multilingual model instance.
 """
+import logging
+
 from multilingual.languages import get_active, FALLBACK_FIELD_SUFFIX
 from multilingual.utils import sanitize_language_code
 
-try:
-    from django.utils.log import logger
-except ImportError:
-    from logging import root as logger
 
 
 # It would be better if field could be derived just from object, but property is currently
@@ -85,7 +83,7 @@ class TranslationProxyField(property):
                 self._field_name
             )
         except instance._meta.translation_model.DoesNotExist:
-            logger.info("Translation '%s' for '%s' (pk='%s') does not exist.", self.name, type(instance), instance.pk)
+            logging.info("Translation '%s' for '%s' (pk='%s') does not exist.", self.name, type(instance), instance.pk)
             return None
 
     def __set__(self, instance, value):
