@@ -1,16 +1,10 @@
 import os
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.contrib.auth.tests.utils import skipIfCustomUser
 from django.test import TestCase
 from django.test.utils import override_settings
 from django.utils.translation import activate, deactivate_all
-
-# Compatibility with Django 1.4
-try:
-    from django.contrib.auth.tests.utils import skipIfCustomUser
-except ImportError:
-    def skipIfCustomUser(inner):
-        return inner
 
 from multilingual.mlflatpages.models import FlatPage
 
@@ -30,25 +24,25 @@ def tearDownModule():
         'django.middleware.csrf.CsrfViewMiddleware',
         'django.contrib.auth.middleware.AuthenticationMiddleware',
         'django.contrib.messages.middleware.MessageMiddleware',
-        # no 'multilingual.mlflatpages.middleware.FlatpageFallbackMiddleware'
+        'multilingual.mlflatpages.middleware.FlatpageFallbackMiddleware',
     ),
     TEMPLATE_DIRS=(
         os.path.join(os.path.dirname(__file__), 'templates'),
     ),
     SITE_ID=1,
 )
-class FlatpageViewTests(TestCase):
+class FlatpageMiddlewareTests(TestCase):
     fixtures = ['sample_flatpages', 'example_site']
     urls = 'multilingual.mlflatpages.tests.urls'
 
     def test_view_flatpage(self):
-        "A flatpage can be served through a view"
+        "A flatpage can be served through a view, even when the middleware is in use"
         response = self.client.get('/flatpage_root/flatpage/')
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "<p>Isn't it flat!</p>")
 
     def test_view_non_existent_flatpage(self):
-        "A non-existent flatpage raises 404 when served through a view"
+        "A non-existent flatpage raises 404 when served through a view, even when the middleware is in use"
         response = self.client.get('/flatpage_root/no_such_flatpage/')
         self.assertEqual(response.status_code, 404)
 
@@ -64,17 +58,29 @@ class FlatpageViewTests(TestCase):
         self.assertContains(response, "<p>Isn't it sekrit!</p>")
 
     def test_fallback_flatpage(self):
-        "A fallback flatpage won't be served if the middleware is disabled"
+        "A flatpage can be served by the fallback middlware"
         response = self.client.get('/flatpage/')
-        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "<p>Isn't it flat!</p>")
 
     def test_fallback_non_existent_flatpage(self):
-        "A non-existent flatpage won't be served if the fallback middlware is disabled"
+        "A non-existent flatpage raises a 404 when served by the fallback middlware"
         response = self.client.get('/no_such_flatpage/')
         self.assertEqual(response.status_code, 404)
 
-    def test_view_flatpage_special_chars(self):
-        "A flatpage with special chars in the URL can be served through a view"
+    @skipIfCustomUser
+    def test_fallback_authenticated_flatpage(self):
+        "A flatpage served by the middleware can require authentication"
+        response = self.client.get('/sekrit/')
+        self.assertRedirects(response, '/accounts/login/?next=/sekrit/')
+        User.objects.create_user('testuser', 'test@example.com', 's3krit')
+        self.client.login(username='testuser',password='s3krit')
+        response = self.client.get('/sekrit/')
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "<p>Isn't it sekrit!</p>")
+
+    def test_fallback_flatpage_special_chars(self):
+        "A flatpage with special chars in the URL can be served by the fallback middleware"
         fp = FlatPage.objects.create(
             url="/some.very_special~chars-here/",
             title="A very special page",
@@ -84,7 +90,7 @@ class FlatpageViewTests(TestCase):
         )
         fp.sites.add(settings.SITE_ID)
 
-        response = self.client.get('/flatpage_root/some.very_special~chars-here/')
+        response = self.client.get('/some.very_special~chars-here/')
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "<p>Isn't it special!</p>")
 
@@ -98,14 +104,14 @@ class FlatpageViewTests(TestCase):
         'django.middleware.csrf.CsrfViewMiddleware',
         'django.contrib.auth.middleware.AuthenticationMiddleware',
         'django.contrib.messages.middleware.MessageMiddleware',
-        # no 'multilingual.mlflatpages.middleware.FlatpageFallbackMiddleware'
+        'multilingual.mlflatpages.middleware.FlatpageFallbackMiddleware',
     ),
     TEMPLATE_DIRS=(
         os.path.join(os.path.dirname(__file__), 'templates'),
     ),
     SITE_ID=1,
 )
-class FlatpageViewAppendSlashTests(TestCase):
+class FlatpageMiddlewareAppendSlashTests(TestCase):
     fixtures = ['sample_flatpages', 'example_site']
     urls = 'multilingual.mlflatpages.tests.urls'
 
@@ -120,17 +126,17 @@ class FlatpageViewAppendSlashTests(TestCase):
         self.assertEqual(response.status_code, 404)
 
     def test_redirect_fallback_flatpage(self):
-        "A fallback flatpage won't be served if the middleware is disabled and should not add a slash"
+        "A flatpage can be served by the fallback middlware and should add a slash"
         response = self.client.get('/flatpage')
-        self.assertEqual(response.status_code, 404)
+        self.assertRedirects(response, '/flatpage/', status_code=301)
 
     def test_redirect_fallback_non_existent_flatpage(self):
-        "A non-existent flatpage won't be served if the fallback middlware is disabled and should not add a slash"
+        "A non-existent flatpage raises a 404 when served by the fallback middlware and should not add a slash"
         response = self.client.get('/no_such_flatpage')
         self.assertEqual(response.status_code, 404)
 
-    def test_redirect_view_flatpage_special_chars(self):
-        "A flatpage with special chars in the URL can be served through a view and should add a slash"
+    def test_redirect_fallback_flatpage_special_chars(self):
+        "A flatpage with special chars in the URL can be served by the fallback middleware and should add a slash"
         fp = FlatPage.objects.create(
             url="/some.very_special~chars-here/",
             title="A very special page",
@@ -140,5 +146,20 @@ class FlatpageViewAppendSlashTests(TestCase):
         )
         fp.sites.add(settings.SITE_ID)
 
-        response = self.client.get('/flatpage_root/some.very_special~chars-here')
-        self.assertRedirects(response, '/flatpage_root/some.very_special~chars-here/', status_code=301)
+        response = self.client.get('/some.very_special~chars-here')
+        self.assertRedirects(response, '/some.very_special~chars-here/', status_code=301)
+
+    def test_redirect_fallback_flatpage_root(self):
+        "A flatpage at / should not cause a redirect loop when APPEND_SLASH is set"
+        fp = FlatPage.objects.create(
+            url="/",
+            title="Root",
+            content="Root",
+            enable_comments=False,
+            registration_required=False,
+        )
+        fp.sites.add(settings.SITE_ID)
+
+        response = self.client.get('/')
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "<p>Root</p>")
