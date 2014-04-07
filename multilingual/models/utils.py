@@ -4,8 +4,9 @@ Utilities for models and queries.
 from django.db.models.constants import LOOKUP_SEP
 from django.db.models.fields import FieldDoesNotExist
 
-from multilingual.db.models.fields import TranslationProxyField, TRANSLATION_FIELD_NAME
 from multilingual.utils import sanitize_language_code
+
+from .fields import TranslationProxyField, TRANSLATION_FIELD_NAME
 
 
 def _get_proxy_or_none(opts, field_name):

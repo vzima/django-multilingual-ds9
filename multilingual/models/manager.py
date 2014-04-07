@@ -3,7 +3,7 @@ Manager for multilingual models
 """
 from django.db.models import Manager
 
-from multilingual.db.models.query import MultilingualQuerySet
+from .query import MultilingualQuerySet
 
 
 class MultilingualManager(Manager):

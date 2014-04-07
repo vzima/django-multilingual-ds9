@@ -6,8 +6,8 @@ import warnings
 from django.db.models.constants import LOOKUP_SEP
 from django.db.models.sql.query import get_order_dir, Query
 
-from multilingual.db.models.fields import TRANSLATION_FIELD_NAME
-from multilingual.db.models.utils import expand_lookup
+from multilingual.models.fields import TRANSLATION_FIELD_NAME
+from multilingual.models.utils import expand_lookup
 from multilingual.languages import get_all, get_active
 from multilingual.utils import sanitize_language_code
 

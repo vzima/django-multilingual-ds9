@@ -7,11 +7,11 @@ from django.test import TestCase
 from django.test.utils import override_settings
 from django.utils.translation import activate, deactivate_all
 
-from multilingual.db.models.base import MultilingualModel, MultilingualModelBase
-from multilingual.db.models.manager import MultilingualManager
-from multilingual.db.models.query import MultilingualQuerySet
-from multilingual.db.models.sql.query import MultilingualQuery
-from multilingual.db.models.translation import TranslationModel
+from multilingual.models.base import MultilingualModel, MultilingualModelBase
+from multilingual.models.manager import MultilingualManager
+from multilingual.models.query import MultilingualQuerySet
+from multilingual.models.sql.query import MultilingualQuery
+from multilingual.models.translation import TranslationModel
 from multilingual.languages import lock, release
 
 from .base import MultilingualSetupMixin, TEST_LANGUAGES

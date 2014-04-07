@@ -6,11 +6,12 @@ from new import classobj
 from django.db import models
 from django.db.models.base import ModelBase
 
-from multilingual.db.models.fields import TranslationProxyField, TranslationRelation, TRANSLATION_FIELD_NAME
-from multilingual.db.models.manager import MultilingualManager
-from multilingual.db.models.options import MultilingualOptions
-from multilingual.db.models.translation import TranslationModelBase, TranslationModel
 from multilingual.languages import get_all
+
+from .fields import TranslationProxyField, TranslationRelation, TRANSLATION_FIELD_NAME
+from .manager import MultilingualManager
+from .options import MultilingualOptions
+from .translation import TranslationModelBase, TranslationModel
 
 # TODO: inheritance of multilingual models and translation models
 

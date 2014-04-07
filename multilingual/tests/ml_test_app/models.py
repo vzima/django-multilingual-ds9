@@ -2,7 +2,8 @@
 Models to test multilingual features.
 """
 from django.db import models
-from multilingual.db.models.base import MultilingualModel
+
+from multilingual import MultilingualModel
 
 
 class Article(MultilingualModel):
