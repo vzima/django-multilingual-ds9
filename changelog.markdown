@@ -1,5 +1,6 @@
 #### 0.4.0 ####
  * Support Django 1.4 and 1.5.
+ * Upgrade flatpages.
  * Change in flatpages database structure:
 
    ```sql
