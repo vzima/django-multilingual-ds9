@@ -76,6 +76,11 @@ class TestModel(TestCase):
         self.assertIsNone(obj.title_en)
         self.assertIsNone(obj.title_en_us)
         self.assertIsNone(obj.title_fr)
+        self.assertQuerysetEqual([obj.translation], ["<ArticleTranslation: 'cs' translation for 'name'>"])
+        self.assertQuerysetEqual([obj.translation_cs], ["<ArticleTranslation: 'cs' translation for 'name'>"])
+        self.assertIsNone(obj.translation_en)
+        self.assertIsNone(obj.translation_en_us)
+        self.assertIsNone(obj.translation_fr)
 
         obj.title_fr = 'Titre'
         self.assertEqual(obj.title, 'Titulek')
@@ -83,6 +88,11 @@ class TestModel(TestCase):
         self.assertIsNone(obj.title_en)
         self.assertIsNone(obj.title_en_us)
         self.assertEqual(obj.title_fr, 'Titre')
+        self.assertQuerysetEqual([obj.translation], ["<ArticleTranslation: 'cs' translation for 'name'>"])
+        self.assertQuerysetEqual([obj.translation_cs], ["<ArticleTranslation: 'cs' translation for 'name'>"])
+        self.assertIsNone(obj.translation_en)
+        self.assertIsNone(obj.translation_en_us)
+        self.assertQuerysetEqual([obj.translation_fr], ["<ArticleTranslation: 'fr' translation for 'name'>"])
 
     def test_fields_active(self):
         # Test fields with active language
@@ -173,6 +183,19 @@ class TestQueries(MultilingualSetupMixin, TestCase):
 
     def setUp(self):
         deactivate_all()
+
+    def test_fields(self):
+        # Test fields on instance stored in database
+        from .ml_test_app.models import Article
+        obj = Article.objects.create(slug='saved')
+
+        self.assertIsNone(obj.title)
+        self.assertIsNone(obj.title_any)
+        self.assertIsNone(obj.title_cs)
+        self.assertIsNone(obj.title_en)
+        self.assertIsNone(obj.translation)
+        self.assertIsNone(obj.translation_cs)
+        self.assertIsNone(obj.translation_en)
 
     def test_load(self):
         from .ml_test_app.models import Article

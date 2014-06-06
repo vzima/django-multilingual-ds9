@@ -30,6 +30,11 @@ class TranslationRel(OneToOneRel):
 
 
 class TranslationDescriptor(ReverseSingleRelatedObjectDescriptor):
+    """
+    Descriptor for the `MultilingualModel.translation` fields.
+
+    Behaves almost the same as descriptor for nullable one-to-one field.
+    """
     # Do not cache the field's cache name.
     def __init__(self, field_with_rel):
         self.field = field_with_rel
@@ -37,6 +42,18 @@ class TranslationDescriptor(ReverseSingleRelatedObjectDescriptor):
     @property
     def cache_name(self):
         return self.field.get_cache_name()
+
+    def __get__(self, instance, instance_type=None):
+        try:
+            return super(TranslationDescriptor, self).__get__(instance, instance_type)
+        except self.field.rel.to.DoesNotExist:
+            # Gotcha: Unlike the one-to-one relation, this relation is bound to the primary key of the multilingual
+            # object, which is usually not None.
+            # Because of that we have to make a query to find out if the translation exists or not, whereas
+            # one-to-one relation finds this out from the value of the relation field.
+            # Handlng exception, which is enexpectedly raised by query in `ReverseSingleRelatedObjectDescriptor`,
+            # seems to be better option that complete override of this method.
+            return None
 
 
 # Based on 'django.contrib.contenttypes.generic.GenericRelation' and
