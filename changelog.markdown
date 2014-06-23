@@ -1,3 +1,8 @@
+#### 0.5.0 ####
+ * Support Django 1.6.
+ * Add virtual `translation` and `translation_LANGUAGE_CODE` fields. The fields are descriptors returning translation
+   instances.
+
 #### 0.4.0 ####
  * Support Django 1.4 and 1.5.
  * Change in flatpages database structure:
