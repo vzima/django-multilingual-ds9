@@ -1,3 +1,0 @@
-"""
-Support for multilingual models
-"""

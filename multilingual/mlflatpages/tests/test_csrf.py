@@ -1,16 +1,9 @@
 import os
-from django.conf import settings
 from django.contrib.auth.models import User
+from django.contrib.auth.tests.utils import skipIfCustomUser
 from django.test import TestCase, Client
 from django.test.utils import override_settings
 from django.utils.translation import activate, deactivate_all
-
-# Compatibility with Django 1.4
-try:
-    from django.contrib.auth.tests.utils import skipIfCustomUser
-except ImportError:
-    def skipIfCustomUser(inner):
-        return inner
 
 
 def setUpModule():

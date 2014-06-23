@@ -2,7 +2,8 @@
 Models to test multilingual features.
 """
 from django.db import models
-from multilingual.db.models.base import MultilingualModel
+
+from multilingual import MultilingualModel
 
 
 class Article(MultilingualModel):
@@ -10,7 +11,7 @@ class Article(MultilingualModel):
 
     class Translation:
         title = models.CharField(max_length=100)
-        content = models.TextField()
+        content = models.TextField(blank=True, null=True)
 
     def __unicode__(self):
         return self.slug

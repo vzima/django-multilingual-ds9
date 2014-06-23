@@ -43,11 +43,10 @@ class TestModelForm(MultilingualSetupMixin, TestCase):
         obj = Article.objects.get(slug='untranslated')
         form = SimpleForm(instance=obj)
         self.assertFalse(form.is_bound)
-        self.assertEqual(form.initial, {'id': 4, 'slug': 'untranslated', 'title': '', 'content': ''})
+        self.assertEqual(form.initial, {'id': 4, 'slug': 'untranslated', 'title': '', 'content': None})
 
     def test_form_bound(self):
         from .ml_test_app.forms import SimpleForm, ExcludeForm
-        from .ml_test_app.models import Article
 
         data = {'slug': 'new', 'title': 'Titulek', 'content': 'Obsah'}
         form = SimpleForm(data)

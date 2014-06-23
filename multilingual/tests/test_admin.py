@@ -38,7 +38,7 @@ class TestModelAdmin(MultilingualSetupMixin, TransactionTestCase):
         self.assertContains(response, '<input type="hidden" name="ml_admin_language" value="cs" />')
         self.assertIsInstance(response.context['adminform'].form, MultilingualModelForm)
         self.assertEqual(response.context['title'], u'Add article for language Čeština')
-        self.assertEqual(response.context['ML_ADMIN_LANGUAGE'], 'cs')
+        self.assertEqual(response.context['ml_admin_language'], 'cs')
 
     def test_add_view_get_en(self):
         response = self.client.get('/admin/ml_test_app/article/add/?ml_admin_language=en')
@@ -49,7 +49,7 @@ class TestModelAdmin(MultilingualSetupMixin, TransactionTestCase):
         self.assertContains(response, '<input type="hidden" name="ml_admin_language" value="en" />')
         self.assertIsInstance(response.context['adminform'].form, MultilingualModelForm)
         self.assertEqual(response.context['title'], 'Add article for language English')
-        self.assertEqual(response.context['ML_ADMIN_LANGUAGE'], 'en')
+        self.assertEqual(response.context['ml_admin_language'], 'en')
 
     def test_add_view_post(self):
         from .ml_test_app.models import Article
@@ -106,7 +106,7 @@ class TestModelAdmin(MultilingualSetupMixin, TransactionTestCase):
         self.assertContains(response, '<input type="hidden" name="ml_admin_language" value="cs" />')
         self.assertIsInstance(response.context['adminform'].form, MultilingualModelForm)
         self.assertEqual(response.context['title'], u'Change article for language Čeština')
-        self.assertEqual(response.context['ML_ADMIN_LANGUAGE'], 'cs')
+        self.assertEqual(response.context['ml_admin_language'], 'cs')
 
     def test_change_view_get_en(self):
         response = self.client.get('/admin/ml_test_app/article/1/?ml_admin_language=en')
@@ -117,7 +117,7 @@ class TestModelAdmin(MultilingualSetupMixin, TransactionTestCase):
         self.assertContains(response, '<input type="hidden" name="ml_admin_language" value="en" />')
         self.assertIsInstance(response.context['adminform'].form, MultilingualModelForm)
         self.assertEqual(response.context['title'], 'Change article for language English')
-        self.assertEqual(response.context['ML_ADMIN_LANGUAGE'], 'en')
+        self.assertEqual(response.context['ml_admin_language'], 'en')
 
     def test_change_view_post(self):
         from .ml_test_app.models import Article
