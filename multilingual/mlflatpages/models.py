@@ -18,7 +18,7 @@ class FlatPage(MultilingualModel):
     registration_required = models.BooleanField(_('registration required'),
         help_text=_("If this is checked, only logged-in users will be able to view the page."),
         default=False)
-    sites = models.ManyToManyField(Site)
+    sites = models.ManyToManyField(Site, related_name='mlflatpage_set')
 
     objects = MultilingualManager()
 
